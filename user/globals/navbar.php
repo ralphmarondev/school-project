@@ -8,7 +8,7 @@
             <ul class="nav flex-column">
 
                 <li class="nav-item">
-                    <a href="dashboard.php" class="nav-link">
+                    <a href="index.php" class="nav-link">
                         <i class="bi me-2 bi-speedometer2"></i> Dashboard
                     </a>
                 </li>
