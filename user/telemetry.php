@@ -44,11 +44,6 @@
             background: var(--primary-light);
         }
 
-        table th {
-            color: var(--primary);
-            font-weight: 600;
-        }
-
         .card-metric {
             height: 100%;
             min-height: 120px;
@@ -87,6 +82,12 @@
 
         canvas {
             height: 250px !important;
+        }
+
+        .toggle-btn {
+            float: right;
+            font-size: 0.85rem;
+            padding: 3px 8px;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -138,17 +139,30 @@
             </div>
         </div>
 
-        <!-- Graphs -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
+                <input type="week" id="weekPicker" class="form-control" value="2025-W42">
+            </div>
+        </div>
+
+        <!-- Charts -->
         <div class="row mb-4">
             <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
-                    <h5 class="text-primary mb-3">Battery Voltage (V)</h5>
+                    <h5 class="text-primary mb-3">
+                        Battery Voltage (V)
+                        <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleBattery">Bar</button>
+                    </h5>
                     <canvas id="batteryChart" height="200"></canvas>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
-                    <h5 class="text-primary mb-3">Motor Vibration (Hz)</h5>
+                    <h5 class="text-primary mb-3">
+                        Motor Vibration (Hz)
+                        <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleVibration">Bar</button>
+                    </h5>
                     <canvas id="vibrationChart" height="200"></canvas>
                 </div>
             </div>
@@ -157,13 +171,19 @@
         <div class="row mb-4">
             <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
-                    <h5 class="text-primary mb-3">Speed per Day (km/h)</h5>
+                    <h5 class="text-primary mb-3">
+                        Speed per Day (km/h)
+                        <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleSpeed">Bar</button>
+                    </h5>
                     <canvas id="speedChart" height="200"></canvas>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
-                    <h5 class="text-primary mb-3">Time Traveled per Day (hours)</h5>
+                    <h5 class="text-primary mb-3">
+                        Time Traveled per Day (hours)
+                        <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleTime">Bar</button>
+                    </h5>
                     <canvas id="timeChart" height="200"></canvas>
                 </div>
             </div>
@@ -182,14 +202,10 @@
                 </div>
                 <div class="modal-body">
                     <form id="setupForm">
-
-                        <!-- Tire Row -->
                         <div class="mb-3">
                             <label class="form-label fw-bold text-primary">Tire:</label>
                             <div class="row g-2">
-                                <div class="col-7">
-                                    <input type="date" class="form-control" id="tireDate">
-                                </div>
+                                <div class="col-7"><input type="date" class="form-control" id="tireDate"></div>
                                 <div class="col-5">
                                     <select id="tireCondition" class="form-select">
                                         <option value="new">Brand New</option>
@@ -199,13 +215,10 @@
                             </div>
                         </div>
 
-                        <!-- Battery Row -->
                         <div class="mb-3">
                             <label class="form-label fw-bold text-primary">Battery:</label>
                             <div class="row g-2">
-                                <div class="col-7">
-                                    <input type="date" class="form-control" id="batteryDate">
-                                </div>
+                                <div class="col-7"><input type="date" class="form-control" id="batteryDate"></div>
                                 <div class="col-5">
                                     <select id="batteryCondition" class="form-select">
                                         <option value="new">Brand New</option>
@@ -215,13 +228,10 @@
                             </div>
                         </div>
 
-                        <!-- Motor Row -->
                         <div class="mb-3">
                             <label class="form-label fw-bold text-primary">Motor:</label>
                             <div class="row g-2">
-                                <div class="col-7">
-                                    <input type="date" class="form-control" id="motorDate">
-                                </div>
+                                <div class="col-7"><input type="date" class="form-control" id="motorDate"></div>
                                 <div class="col-5">
                                     <select id="motorCondition" class="form-select">
                                         <option value="new">Brand New</option>
@@ -230,7 +240,6 @@
                                 </div>
                             </div>
                         </div>
-
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -241,90 +250,139 @@
     </div>
 
     <script>
+        // Labels (common)
+        const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
         // Battery Chart
-        new Chart(document.getElementById('batteryChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: ['10:00', '10:05', '10:10', '10:15', '10:20'],
-                datasets: [{
-                    label: 'Battery Voltage (V)',
-                    data: [48, 47.8, 47.5, 47.3, 47.0],
-                    borderColor: 'rgb(174,14,14)',
-                    backgroundColor: 'rgba(174,14,14,0.2)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+        let batteryType = 'bar';
+        let vibrationType = 'bar';
+        let speedType = 'bar';
+        let timeType = 'bar';
+
+        const batteryCtx = document.getElementById('batteryChart').getContext('2d');
+        const vibrationCtx = document.getElementById('vibrationChart').getContext('2d');
+        const speedCtx = document.getElementById('speedChart').getContext('2d');
+        const timeCtx = document.getElementById('timeChart').getContext('2d');
+
+        let batteryChart = createBatteryChart(batteryType);
+        let vibrationChart = createVibrationChart(vibrationType);
+        let speedChart = createSpeedChart(speedType);
+        let timeChart = createTimeChart(timeType);
+
+        // Battery Toggle
+        document.getElementById('toggleBattery').addEventListener('click', () => {
+            batteryType = batteryType === 'bar' ? 'line' : 'bar';
+            batteryChart.destroy();
+            batteryChart = createBatteryChart(batteryType);
+            document.getElementById('toggleBattery').textContent = batteryType === 'bar' ? 'Bar' : 'Line';
         });
 
-        // Vibration Chart
-        new Chart(document.getElementById('vibrationChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: ['10:00', '10:05', '10:10', '10:15', '10:20'],
-                datasets: [{
-                    label: 'Motor Vibration (Hz)',
-                    data: [2.1, 2.3, 2.0, 2.5, 2.4],
-                    borderColor: 'rgb(14,14,174)',
-                    backgroundColor: 'rgba(14,14,174,0.2)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+        // Vibration Toggle
+        document.getElementById('toggleVibration').addEventListener('click', () => {
+            vibrationType = vibrationType === 'bar' ? 'line' : 'bar';
+            vibrationChart.destroy();
+            vibrationChart = createVibrationChart(vibrationType);
+            document.getElementById('toggleVibration').textContent = vibrationType === 'bar' ? 'Bar' : 'Line';
         });
 
-        // Speed per Day Chart
-        new Chart(document.getElementById('speedChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Average Speed (km/h)',
-                    data: [45, 50, 48, 52, 55, 60, 58],
-                    backgroundColor: 'rgba(174,14,14,0.6)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+        // Speed Toggle
+        document.getElementById('toggleSpeed').addEventListener('click', () => {
+            speedType = speedType === 'bar' ? 'line' : 'bar';
+            speedChart.destroy();
+            speedChart = createSpeedChart(speedType);
+            document.getElementById('toggleSpeed').textContent = speedType === 'bar' ? 'Bar' : 'Line';
+        });
+
+        // Time Toggle
+        document.getElementById('toggleTime').addEventListener('click', () => {
+            timeType = timeType === 'bar' ? 'line' : 'bar';
+            timeChart.destroy();
+            timeChart = createTimeChart(timeType);
+            document.getElementById('toggleTime').textContent = timeType === 'bar' ? 'Bar' : 'Line';
+        });
+
+        // Chart Creators
+        function createBatteryChart(type) {
+            return new Chart(batteryCtx, {
+                type: type,
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: 'Battery Voltage (V)',
+                        data: [48, 47.8, 47.6, 47.4, 47.2, 47.1, 46.9],
+                        backgroundColor: 'rgba(174,14,14,0.6)',
+                        borderColor: 'rgb(174,14,14)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
-            }
-        });
+            });
+        }
 
-        // Time Traveled per Day Chart
-        new Chart(document.getElementById('timeChart').getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Time Traveled (hours)',
-                    data: [2.5, 3, 2, 4, 3.5, 5, 4.5],
-                    backgroundColor: 'rgba(14,14,174,0.6)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+        function createVibrationChart(type) {
+            return new Chart(vibrationCtx, {
+                type: type,
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: 'Motor Vibration (Hz)',
+                        data: [2.1, 2.3, 2.2, 2.5, 2.4, 2.6, 2.3],
+                        backgroundColor: 'rgba(14,14,174,0.6)',
+                        borderColor: 'rgb(14,14,174)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
                 }
-            }
-        });
+            });
+        }
 
+        function createSpeedChart(type) {
+            return new Chart(speedCtx, {
+                type: type,
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: 'Average Speed (km/h)',
+                        data: [45, 50, 48, 52, 55, 60, 58],
+                        backgroundColor: 'rgba(174,14,14,0.6)',
+                        borderColor: 'rgb(174,14,14)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function createTimeChart(type) {
+            return new Chart(timeCtx, {
+                type: type,
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: 'Time Traveled (hours)',
+                        data: [2.5, 3, 2, 4, 3.5, 5, 4.5],
+                        backgroundColor: 'rgba(14,14,174,0.6)',
+                        borderColor: 'rgb(14,14,174)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // Modal Save
         function saveSetup() {
             const setup = {
                 tireDate: document.getElementById('tireDate').value,
