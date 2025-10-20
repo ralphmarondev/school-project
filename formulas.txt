@@ -1,0 +1,1 @@
+mileage = (velocity * time_traveled) 

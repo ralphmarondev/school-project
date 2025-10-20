@@ -53,29 +53,6 @@
             vertical-align: middle;
         }
 
-        .search-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .search-container input {
-            max-width: 300px;
-            border-radius: var(--border-radius);
-            border: 1px solid #ccc;
-            padding: 8px 12px;
-            transition: var(--transition);
-        }
-
-        .search-container input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 4px rgba(174, 14, 14, 0.2);
-        }
-
         #main {
             transition: margin-left 0.3s ease, width 0.3s ease;
             margin-left: 250px;
@@ -97,7 +74,6 @@
         /* Graph canvas consistent height */
         canvas {
             height: 250px !important;
-            /* fixed height for all charts */
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -146,69 +122,38 @@
             <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
                     <h5 class="text-primary mb-3">Battery Voltage (V)</h5>
-                    <canvas id="batteryChart" height="200"></canvas>
+                    <canvas id="batteryChart"></canvas>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
                     <h5 class="text-primary mb-3">Motor Vibration (Hz)</h5>
-                    <canvas id="vibrationChart" height="200"></canvas>
+                    <canvas id="vibrationChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Alerts / Predictive Maintenance -->
-        <div class="row">
-            <div class="col-12">
+        <!-- NEW CHARTS: Speed Per Day & Time Traveled Per Day -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
                 <div class="card shadow-sm p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="text-primary mb-0">Predictive Maintenance Alerts</h5>
-                        <div class="search-container">
-                            <input type="text" id="alertsSearch" placeholder="Search alerts...">
-                        </div>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center align-middle" id="alertsTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Component</th>
-                                    <th>Severity</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2025-10-20 10:30</td>
-                                    <td>Battery</td>
-                                    <td><span class="badge bg-warning text-dark">Warning</span></td>
-                                    <td>Check connectors</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-10-20 09:50</td>
-                                    <td>Motor</td>
-                                    <td><span class="badge bg-danger">Critical</span></td>
-                                    <td>Stop vehicle, inspect motor</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-10-19 16:15</td>
-                                    <td>Tire</td>
-                                    <td><span class="badge bg-success">Normal</span></td>
-                                    <td>None</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <h5 class="text-primary mb-3">Speed per Day (km/h)</h5>
+                    <canvas id="speedPerDayChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card shadow-sm p-3">
+                    <h5 class="text-primary mb-3">Time Traveled per Day (hrs)</h5>
+                    <canvas id="timePerDayChart"></canvas>
                 </div>
             </div>
         </div>
-
     </div>
 
     <?php include "./globals/scripts.php"; ?>
 
-    <!-- Chart.js scripts -->
     <script>
+        // ================== Battery Chart ==================
         const batteryCtx = document.getElementById('batteryChart').getContext('2d');
         const batteryChart = new Chart(batteryCtx, {
             type: 'line',
@@ -229,6 +174,7 @@
             }
         });
 
+        // ================== Vibration Chart ==================
         const vibrationCtx = document.getElementById('vibrationChart').getContext('2d');
         const vibrationChart = new Chart(vibrationCtx, {
             type: 'line',
@@ -249,13 +195,64 @@
             }
         });
 
-        // Alerts search filter
-        document.getElementById('alertsSearch').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#alertsTable tbody tr');
-            rows.forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
+        // ================== Speed Per Day Chart ==================
+        const speedCtx = document.getElementById('speedPerDayChart').getContext('2d');
+        const speedChart = new Chart(speedCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Speed (km/h)',
+                    data: [55, 60, 52, 63, 58, 65, 59],
+                    backgroundColor: 'rgba(174,14,14,0.6)',
+                    borderColor: 'rgb(174,14,14)',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Speed (km/h)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // ================== Time Traveled Per Day Chart ==================
+        const timeCtx = document.getElementById('timePerDayChart').getContext('2d');
+        const timeChart = new Chart(timeCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Time (hours)',
+                    data: [2, 2.5, 3, 1.5, 2.2, 3.5, 2.8],
+                    backgroundColor: 'rgba(14,14,174,0.6)',
+                    borderColor: 'rgb(14,14,174)',
+                    borderWidth: 1,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Hours'
+                        }
+                    }
+                }
+            }
         });
     </script>
 </body>

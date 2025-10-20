@@ -32,12 +32,6 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="battery_temp.php" class="nav-link">
-                        <i class="bi me-2 bi-thermometer-half"></i> Battery Temperature
-                    </a>
-                </li>
-
-                <li class="nav-item">
                     <a href="motor_vibration.php" class="nav-link">
                         <i class="bi me-2 bi-activity"></i> Motor Vibration
                     </a>
@@ -56,20 +50,8 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="predictive_analysis.php" class="nav-link">
-                        <i class="bi me-2 bi-graph-up-arrow"></i> Predictive Analysis
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="alerts.php" class="nav-link">
-                        <i class="bi me-2 bi-exclamation-triangle"></i> Alerts
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="settings.php" class="nav-link">
-                        <i class="bi me-2 bi-gear"></i> Settings
+                    <a href="predictive_maintenance.php" class="nav-link">
+                        <i class="bi me-2 bi-exclamation-triangle"></i> Predictive Maintenance
                     </a>
                 </li>
 
