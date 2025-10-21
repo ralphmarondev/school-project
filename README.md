@@ -111,3 +111,16 @@ INSERT INTO tire (owner_id, pressure, tire_condition, week_start, week_end) VALU
 (1, 31.5, 'Good', @week_start, @week_end),
 (1, 31.4, 'Good', @week_start, @week_end);
 ```
+
+Volt:
+- max: 72
+- min: 30
+
+Speed:
+- max: 80
+- min: 0
+
+Time:
+- 8am - 8pm => 12hrs
+  
+

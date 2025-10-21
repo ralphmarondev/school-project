@@ -26,11 +26,9 @@
 			height: 100%;
 		}
 
-		h3,
 		h5 {
 			color: var(--primary);
 			font-weight: bold;
-			text-transform: uppercase;
 		}
 
 		#main {
@@ -52,7 +50,7 @@
 		}
 
 		canvas {
-			height: 250px !important;
+			height: 260px !important;
 		}
 
 		.chart-header {
@@ -62,11 +60,6 @@
 			flex-wrap: wrap;
 			gap: 0.5rem;
 		}
-
-		.chart-header button {
-			font-size: 0.85rem;
-			padding: 4px 10px;
-		}
 	</style>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -75,28 +68,28 @@
 	<?php include "./globals/navbar.php"; ?>
 
 	<div id="main" class="container-fluid py-4 mt-5">
-		<!-- Top Tire Condition Cards -->
+		<!-- Tire Stats Cards -->
 		<div class="row mb-4">
 			<div class="col-md-3 mb-2">
-				<div class="card text-center p-3 shadow-sm d-flex flex-column justify-content-center">
+				<div class="card text-center p-3">
 					<h6>Average Pressure</h6>
 					<span id="avgPressure" class="fs-4 text-primary">-- PSI</span>
 				</div>
 			</div>
 			<div class="col-md-3 mb-2">
-				<div class="card text-center p-3 shadow-sm d-flex flex-column justify-content-center">
+				<div class="card text-center p-3">
 					<h6>Average Tread Depth</h6>
 					<span id="avgTread" class="fs-4 text-primary">-- mm</span>
 				</div>
 			</div>
 			<div class="col-md-3 mb-2">
-				<div class="card text-center p-3 shadow-sm d-flex flex-column justify-content-center">
+				<div class="card text-center p-3">
 					<h6>Status</h6>
 					<span id="status" class="fs-4 text-success">Normal</span>
 				</div>
 			</div>
 			<div class="col-md-3 mb-2">
-				<div class="card text-center p-3 shadow-sm d-flex flex-column justify-content-center">
+				<div class="card text-center p-3">
 					<h6>Total Checks</h6>
 					<span id="checkCount" class="fs-4 text-primary">--</span>
 				</div>
@@ -107,11 +100,11 @@
 		<div class="row mb-3">
 			<div class="col-md-3">
 				<label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
-				<input type="week" id="weekPicker" class="form-control" value="2025-W42">
+				<input type="week" id="weekPicker" class="form-control" value="2025-W43">
 			</div>
 		</div>
 
-		<!-- Tire Condition Chart -->
+		<!-- Tire Pressure Chart -->
 		<div class="row mb-4">
 			<div class="col-12">
 				<div class="card shadow-sm p-3">
@@ -124,7 +117,7 @@
 			</div>
 		</div>
 
-		<!-- Tire Details Table -->
+		<!-- Tire Condition Table -->
 		<div class="row">
 			<div class="col-12">
 				<div class="card shadow-sm p-3">
@@ -153,38 +146,64 @@
 	<?php include "./globals/scripts.php"; ?>
 
 	<script>
-		const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 		let chartType = 'bar';
+		let tireChart;
 		let tireData = [];
 
-		// Fetch data from telemetry_data.php
-		async function loadTelemetryData(week) {
-			try {
-				const response = await fetch(`./telemetry_data.php?week=${week}`);
-				const data = await response.json();
-
-				// Map telemetry data to tire pressure-like data
-				tireData = data.labels.map((day, i) => ({
-					day: day,
-					pressure: (data.vibration[i] * 10 + 28).toFixed(1), // Derived PSI-like value
-					tread: (Math.max(2, 5 - i * 0.3)).toFixed(1) // Simulated tread wear
-				}));
-
-				updateSummary();
-				renderTable();
-				updateChart();
-			} catch (error) {
-				console.error("Failed to load telemetry data:", error);
-			}
-		}
-
+		// --- Helper Functions ---
 		function getStatus(p, t) {
 			if (p >= 32 && t >= 4) return 'Normal';
 			if ((p >= 28 && p < 32) || (t >= 2 && t < 4)) return 'Warning';
 			return 'Replace Soon';
 		}
 
-		function updateSummary() {
+		function getColorClass(status) {
+			if (status === 'Normal') return 'text-success';
+			if (status === 'Warning') return 'text-warning';
+			return 'text-danger';
+		}
+
+		function getDateRangeFromWeek(weekString) {
+			const [year, weekNum] = weekString.split('-W').map(Number);
+			const monday = new Date(year, 0, (weekNum - 1) * 7 + 1);
+			while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1);
+			const sunday = new Date(monday);
+			sunday.setDate(monday.getDate() + 6);
+			return {
+				start: monday.toISOString().split('T')[0],
+				end: sunday.toISOString().split('T')[0]
+			};
+		}
+
+		// --- Fetch Tire Data ---
+		async function loadTireData(weekValue) {
+			const {
+				start,
+				end
+			} = getDateRangeFromWeek(weekValue);
+			document.getElementById('chartTitle').textContent = `Tire Pressure per Day (PSI) — ${start} to ${end}`;
+
+			try {
+				const res = await fetch(`telemetry_data.php?start=${start}&end=${end}`);
+				const data = await res.json();
+
+				// Map fetched tire pressure data
+				tireData = data.labels.map((day, i) => ({
+					day: day,
+					pressure: parseFloat(data.tire[i] ?? 30),
+					tread: (Math.max(2, 5 - i * 0.3)).toFixed(1) // simulated tread wear
+				}));
+
+				updateDashboard();
+				renderTable();
+				updateChart();
+			} catch (err) {
+				console.error("Error loading tire data:", err);
+			}
+		}
+
+		// --- Update Summary Cards ---
+		function updateDashboard() {
 			if (!tireData.length) return;
 			const avgPressure = (tireData.reduce((a, b) => a + parseFloat(b.pressure), 0) / tireData.length).toFixed(1);
 			const avgTread = (tireData.reduce((a, b) => a + parseFloat(b.tread), 0) / tireData.length).toFixed(1);
@@ -196,49 +215,14 @@
 			const status = getStatus(avgPressure, avgTread);
 			const statusElem = document.getElementById('status');
 			statusElem.textContent = status;
-			statusElem.className = 'fs-4 ' + (status === 'Normal' ?
-				'text-success' :
-				status === 'Warning' ?
-				'text-warning' :
-				'text-danger');
+			statusElem.className = 'fs-4 ' + getColorClass(status);
 		}
 
-		// Chart setup
-		const ctx = document.getElementById('tireChart').getContext('2d');
-		let tireChart = new Chart(ctx, {
-			type: chartType,
-			data: {
-				labels: days,
-				datasets: [{
-					label: 'Pressure (PSI)',
-					data: [],
-					backgroundColor: 'rgba(174,14,14,0.6)',
-					borderColor: 'rgb(174,14,14)',
-					fill: true,
-					tension: 0.3
-				}]
-			},
-			options: {
-				responsive: true,
-				maintainAspectRatio: false,
-				scales: {
-					y: {
-						beginAtZero: true
-					}
-				}
-			}
-		});
-
+		// --- Render Chart ---
 		function updateChart() {
-			tireChart.data.labels = tireData.map(d => d.day);
-			tireChart.data.datasets[0].data = tireData.map(d => d.pressure);
-			tireChart.update();
-		}
+			const ctx = document.getElementById('tireChart').getContext('2d');
+			if (tireChart) tireChart.destroy();
 
-		// Toggle chart type
-		document.getElementById('toggleChartType').addEventListener('click', () => {
-			chartType = chartType === 'bar' ? 'line' : 'bar';
-			tireChart.destroy();
 			tireChart = new Chart(ctx, {
 				type: chartType,
 				data: {
@@ -262,11 +246,9 @@
 					}
 				}
 			});
-			document.getElementById('toggleChartType').textContent =
-				chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
-		});
+		}
 
-		// Render table
+		// --- Render Table ---
 		function renderTable() {
 			const tbody = document.getElementById('tireBody');
 			tbody.innerHTML = '';
@@ -277,20 +259,16 @@
 			}) => {
 				const status = getStatus(pressure, tread);
 				tbody.innerHTML += `
-                <tr>
-                    <td>${day}</td>
-                    <td>${pressure}</td>
-                    <td>${tread}</td>
-                    <td><span class="badge bg-${status === 'Normal'
-                        ? 'success'
-                        : status === 'Warning'
-                            ? 'warning text-dark'
-                            : 'danger'}">${status}</span></td>
-                </tr>`;
+					<tr>
+						<td>${day}</td>
+						<td>${pressure}</td>
+						<td>${tread}</td>
+						<td class="${getColorClass(status)} fw-bold">${status}</td>
+					</tr>`;
 			});
 		}
 
-		// Search filter
+		// --- Search Filter ---
 		document.getElementById('tireSearch').addEventListener('keyup', function() {
 			const filter = this.value.toLowerCase();
 			document.querySelectorAll('#tireTable tbody tr').forEach(row => {
@@ -298,15 +276,21 @@
 			});
 		});
 
-		// Week change
-		document.getElementById('weekPicker').addEventListener('change', (e) => {
-			const week = e.target.value;
-			document.getElementById('chartTitle').textContent = `Tire Pressure per Day (PSI) — ${week}`;
-			loadTelemetryData(week);
+		// --- Toggle Chart Type ---
+		document.getElementById('toggleChartType').addEventListener('click', () => {
+			chartType = chartType === 'bar' ? 'line' : 'bar';
+			document.getElementById('toggleChartType').textContent =
+				chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
+			updateChart();
 		});
 
-		// Initialize
-		loadTelemetryData(document.getElementById('weekPicker').value);
+		// --- Week Change ---
+		document.getElementById('weekPicker').addEventListener('change', (e) => {
+			loadTireData(e.target.value);
+		});
+
+		// --- Initial Load ---
+		loadTireData(document.getElementById('weekPicker').value);
 	</script>
 </body>
 

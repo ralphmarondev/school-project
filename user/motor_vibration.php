@@ -97,7 +97,7 @@
 		<div class="row mb-3">
 			<div class="col-md-3">
 				<label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
-				<input type="week" id="weekPicker" class="form-control" value="2025-W42">
+				<input type="week" id="weekPicker" class="form-control" value="2025-W43">
 			</div>
 		</div>
 
@@ -142,8 +142,7 @@
 	<script>
 		const ctx = document.getElementById('vibrationChart').getContext('2d');
 		let chartType = 'bar';
-		let vibrationData = [];
-		let days = [];
+		let vibrationChart = null;
 
 		function getStatus(value) {
 			if (value < 2.5) return 'Normal';
@@ -183,14 +182,12 @@
 			});
 		}
 
-		let vibrationChart = null;
-
 		function updateDashboard(data) {
-			days = data.labels;
-			vibrationData = data.vibration;
+			const days = data.labels;
+			const vibrationData = data.vibration;
 
-			const avg = vibrationData.reduce((a, b) => a + b, 0) / vibrationData.length;
-			const max = Math.max(...vibrationData);
+			const avg = vibrationData.reduce((a, b) => a + b, 0) / vibrationData.length || 0;
+			const max = Math.max(...vibrationData, 0);
 			const count = vibrationData.length;
 			const status = getStatus(avg);
 
@@ -200,16 +197,16 @@
 			document.getElementById('status').textContent = status;
 			document.getElementById('status').className = 'fs-4 ' + getColorClass(status);
 
-			renderTable();
-			updateChart();
+			renderTable(days, vibrationData);
+			updateChart(days, vibrationData);
 		}
 
-		function updateChart() {
+		function updateChart(days, vibrationData) {
 			if (vibrationChart) vibrationChart.destroy();
 			vibrationChart = createChart(chartType, days, vibrationData);
 		}
 
-		function renderTable() {
+		function renderTable(days, vibrationData) {
 			const tbody = document.getElementById('vibrationBody');
 			tbody.innerHTML = '';
 			days.forEach((day, i) => {
@@ -218,7 +215,7 @@
 				tbody.innerHTML += `
 					<tr>
 						<td>${day}</td>
-						<td>${val}</td>
+						<td>${val.toFixed(2)}</td>
 						<td class="${getColorClass(status)} fw-bold">${status}</td>
 						<td>${status === 'Normal' ? 'Stable' : status === 'Warning' ? 'Slight anomaly' : 'Check motor'}</td>
 					</tr>
@@ -228,24 +225,46 @@
 
 		document.getElementById('toggleChartType').addEventListener('click', () => {
 			chartType = chartType === 'bar' ? 'line' : 'bar';
-			updateChart();
-			document.getElementById('toggleChartType').textContent = chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
+			document.getElementById('toggleChartType').textContent =
+				chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
+			const week = document.getElementById('weekPicker').value;
+			loadWeekData(week);
 		});
 
-		document.getElementById('weekPicker').addEventListener('change', e => {
+		document.getElementById('weekPicker').addEventListener('change', (e) => {
 			const week = e.target.value;
-			document.getElementById('chartTitle').textContent = `Motor Vibration per Day (Hz) — ${week}`;
-			loadTelemetryData();
+			loadWeekData(week);
 		});
 
-		function loadTelemetryData() {
-			fetch('telemetry_data.php')
+		function getDateRangeFromWeek(weekString) {
+			const [year, weekNum] = weekString.split('-W').map(Number);
+			const monday = new Date(year, 0, (weekNum - 1) * 7 + 1);
+			while (monday.getDay() !== 1) monday.setDate(monday.getDate() - 1);
+			const sunday = new Date(monday);
+			sunday.setDate(monday.getDate() + 6);
+
+			return {
+				start: monday.toISOString().split('T')[0],
+				end: sunday.toISOString().split('T')[0]
+			};
+		}
+
+		function loadWeekData(weekValue) {
+			const {
+				start,
+				end
+			} = getDateRangeFromWeek(weekValue);
+			document.getElementById('chartTitle').textContent =
+				`Motor Vibration per Day (Hz) — ${start} to ${end}`;
+
+			fetch(`telemetry_data.php?start=${start}&end=${end}`)
 				.then(res => res.json())
 				.then(updateDashboard)
 				.catch(err => console.error('Error loading data:', err));
 		}
 
-		loadTelemetryData();
+		// Initial load for current week
+		loadWeekData(document.getElementById('weekPicker').value);
 	</script>
 </body>
 
