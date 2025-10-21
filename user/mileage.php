@@ -25,7 +25,8 @@
             background: #fff;
         }
 
-        h3, h5 {
+        h3,
+        h5 {
             color: var(--primary);
             font-weight: bold;
             text-transform: uppercase;
@@ -41,29 +42,6 @@
 
         .btn-primary:hover {
             background: var(--primary-light);
-        }
-
-        .search-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .search-container input {
-            max-width: 300px;
-            border-radius: var(--border-radius);
-            border: 1px solid #ccc;
-            padding: 8px 12px;
-            transition: var(--transition);
-        }
-
-        .search-container input:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 4px rgba(174, 14, 14, 0.2);
         }
 
         #main {
@@ -84,9 +62,21 @@
             }
         }
 
-        /* Consistent chart height */
         canvas {
             height: 250px !important;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .chart-header button {
+            font-size: 0.85rem;
+            padding: 4px 10px;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -96,31 +86,40 @@
     <?php include "./globals/navbar.php"; ?>
 
     <div id="main" class="container-fluid py-4 mt-5">
+
         <!-- Top Mileage Metrics -->
         <div class="row mb-4">
             <div class="col-md-3 mb-2">
                 <div class="card text-center p-3 shadow-sm">
                     <h6>Total Mileage</h6>
-                    <span id="totalMileage" class="fs-4">1200 km</span>
+                    <span id="totalMileage" class="fs-4 text-primary">0 km</span>
                 </div>
             </div>
             <div class="col-md-3 mb-2">
                 <div class="card text-center p-3 shadow-sm">
                     <h6>Average per Trip</h6>
-                    <span id="avgMileage" class="fs-4">35 km</span>
+                    <span id="avgMileage" class="fs-4 text-primary">0 km</span>
                 </div>
             </div>
             <div class="col-md-3 mb-2">
                 <div class="card text-center p-3 shadow-sm">
-                    <h6>Trips Today</h6>
-                    <span id="tripsToday" class="fs-4">3</span>
+                    <h6>Trips This Week</h6>
+                    <span id="tripsWeek" class="fs-4 text-primary">0</span>
                 </div>
             </div>
             <div class="col-md-3 mb-2">
                 <div class="card text-center p-3 shadow-sm">
-                    <h6>Max Trip</h6>
-                    <span id="maxTrip" class="fs-4">80 km</span>
+                    <h6>Max Daily Mileage</h6>
+                    <span id="maxTrip" class="fs-4 text-primary">0 km</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Week Selector -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
+                <input type="week" id="weekPicker" class="form-control" value="2025-W42">
             </div>
         </div>
 
@@ -128,7 +127,10 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card shadow-sm p-3">
-                    <h5 class="text-primary mb-3">Mileage Over Time</h5>
+                    <div class="chart-header">
+                        <h5 id="chartTitle" class="text-primary mb-0">Mileage per Day (km)</h5>
+                        <button class="btn btn-outline-primary btn-sm" id="toggleChartType">Switch to Line</button>
+                    </div>
                     <canvas id="mileageChart"></canvas>
                 </div>
             </div>
@@ -140,44 +142,20 @@
                 <div class="card shadow-sm p-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="text-primary mb-0">Trip Details</h5>
-                        <div class="search-container">
-                            <input type="text" id="tripSearch" placeholder="Search trips...">
-                        </div>
+                        <input type="text" id="tripSearch" placeholder="Search trips..." class="form-control" style="max-width: 300px;">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered text-center align-middle" id="tripsTable">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Distance (km)</th>
-                                    <th>Duration</th>
+                                    <th>Day</th>
+                                    <th>Velocity (km/h)</th>
+                                    <th>Time Traveled (h)</th>
+                                    <th>Mileage (km)</th>
                                     <th>Route</th>
-                                    <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2025-10-20</td>
-                                    <td>40</td>
-                                    <td>1h 20m</td>
-                                    <td>Downtown – Uptown</td>
-                                    <td><span class="badge bg-success">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>2025-10-19</td>
-                                    <td>50</td>
-                                    <td>1h 45m</td>
-                                    <td>Station – Market</td>
-                                    <td><span class="badge bg-success">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>2025-10-18</td>
-                                    <td>30</td>
-                                    <td>1h 10m</td>
-                                    <td>Park – Mall</td>
-                                    <td><span class="badge bg-warning text-dark">Pending</span></td>
-                                </tr>
-                            </tbody>
+                            <tbody id="tripBody"></tbody>
                         </table>
                     </div>
                 </div>
@@ -188,35 +166,114 @@
     <?php include "./globals/scripts.php"; ?>
 
     <script>
-        // Chart.js Mileage Graph
-        const mileageCtx = document.getElementById('mileageChart').getContext('2d');
-        const mileageChart = new Chart(mileageCtx, {
-            type: 'line',
-            data: {
-                labels: ['2025-10-15', '2025-10-16', '2025-10-17', '2025-10-18', '2025-10-19', '2025-10-20'],
-                datasets: [{
-                    label: 'Distance (km)',
-                    data: [30, 25, 40, 30, 50, 40],
-                    borderColor: 'rgb(174,14,14)',
-                    backgroundColor: 'rgba(174,14,14,0.2)',
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false
-            }
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        let chartType = 'bar';
+
+        // Generate sample weekly trip data
+        let tripData = generateRandomData();
+
+        function generateRandomData() {
+            return days.map(() => ({
+                velocity: Math.floor(Math.random() * 40) + 40, // 40–80 km/h
+                time: (Math.random() * 2 + 1).toFixed(1), // 1–3 hours
+            }));
+        }
+
+        function calculateMileage() {
+            return tripData.map(d => d.velocity * d.time);
+        }
+
+        // Compute stats and update the cards
+        function updateStats() {
+            const mileage = calculateMileage();
+            const total = mileage.reduce((a, b) => a + b, 0);
+            const avg = total / mileage.length;
+            const max = Math.max(...mileage);
+
+            document.getElementById('totalMileage').textContent = `${total.toFixed(1)} km`;
+            document.getElementById('avgMileage').textContent = `${avg.toFixed(1)} km`;
+            document.getElementById('tripsWeek').textContent = mileage.length;
+            document.getElementById('maxTrip').textContent = `${max.toFixed(1)} km`;
+        }
+
+        // Chart creation
+        const ctx = document.getElementById('mileageChart').getContext('2d');
+        let mileageChart = createMileageChart(chartType);
+
+        function createMileageChart(type) {
+            return new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Mileage (km)',
+                        data: calculateMileage(),
+                        backgroundColor: 'rgba(174,14,14,0.6)',
+                        borderColor: 'rgb(174,14,14)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toggle chart type
+        document.getElementById('toggleChartType').addEventListener('click', () => {
+            chartType = chartType === 'bar' ? 'line' : 'bar';
+            mileageChart.destroy();
+            mileageChart = createMileageChart(chartType);
+            document.getElementById('toggleChartType').textContent =
+                chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
         });
 
-        // Trip search filter
+        // Week change listener
+        document.getElementById('weekPicker').addEventListener('change', (e) => {
+            const week = e.target.value;
+            document.getElementById('chartTitle').textContent = `Mileage per Day (km) — ${week}`;
+            tripData = generateRandomData();
+            mileageChart.data.datasets[0].data = calculateMileage();
+            mileageChart.update();
+            renderTable();
+            updateStats();
+        });
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tripBody');
+            tbody.innerHTML = '';
+            days.forEach((day, i) => {
+                const row = `
+                    <tr>
+                        <td>${day}</td>
+                        <td>${tripData[i].velocity}</td>
+                        <td>${tripData[i].time}</td>
+                        <td>${(tripData[i].velocity * tripData[i].time).toFixed(1)}</td>
+                        <td>Sample Route</td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Search filter
         document.getElementById('tripSearch').addEventListener('keyup', function() {
             const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#tripsTable tbody tr');
-            rows.forEach(row => {
+            document.querySelectorAll('#tripsTable tbody tr').forEach(row => {
                 row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
             });
         });
+
+        // Initialize
+        renderTable();
+        updateStats();
     </script>
 </body>
 
