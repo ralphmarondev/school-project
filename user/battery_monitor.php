@@ -173,16 +173,23 @@
 		let chartType = 'bar';
 		let batteryData = [];
 
-		// Fetch from telemetry_data.php
 		async function loadBatteryData(week) {
 			try {
-				const response = await fetch(`./telemetry_data.php?week=${week}`);
+				// Convert week (YYYY-W##) into Monday–Sunday date range
+				const [year, weekNum] = week.split('-W').map(Number);
+				const monday = getDateOfISOWeek(weekNum, year);
+				const sunday = new Date(monday);
+				sunday.setDate(monday.getDate() + 6);
+
+				const start = monday.toISOString().split('T')[0];
+				const end = sunday.toISOString().split('T')[0];
+
+				const response = await fetch(`./telemetry_data.php?start=${start}&end=${end}`);
 				const data = await response.json();
 
-				// Use battery field (voltage)
 				batteryData = data.labels.map((day, i) => ({
 					day,
-					voltage: data.battery[i]
+					voltage: data.battery[i] ?? 0
 				}));
 
 				updateMetrics();
@@ -191,6 +198,17 @@
 			} catch (err) {
 				console.error('Failed to load battery data:', err);
 			}
+		}
+
+		function getDateOfISOWeek(week, year) {
+			const simple = new Date(year, 0, 1 + (week - 1) * 7);
+			const dow = simple.getDay();
+			const ISOweekStart = simple;
+			if (dow <= 4)
+				ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+			else
+				ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+			return ISOweekStart;
 		}
 
 		function getStatus(voltage) {
@@ -207,6 +225,8 @@
 
 		function updateMetrics() {
 			const voltages = batteryData.map(d => d.voltage);
+			if (voltages.length === 0) return;
+
 			const avg = voltages.reduce((a, b) => a + b, 0) / voltages.length;
 			const max = Math.max(...voltages);
 			const min = Math.min(...voltages);
@@ -245,8 +265,8 @@
 					scales: {
 						y: {
 							beginAtZero: false,
-							min: 45,
-							max: 50
+							min: 10,
+							max: 15
 						}
 					}
 				}
@@ -297,7 +317,6 @@
 			});
 		});
 
-		// Initialize
 		loadBatteryData(weekPicker.value);
 	</script>
 </body>
