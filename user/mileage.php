@@ -90,25 +90,25 @@
         <!-- Top Mileage Metrics -->
         <div class="row mb-4">
             <div class="col-md-3 mb-2">
-                <div class="card text-center p-3 shadow-sm">
+                <div class="card text-center p-3 shadow-sm h-100">
                     <h6>Total Mileage</h6>
                     <span id="totalMileage" class="fs-4 text-primary">0 km</span>
                 </div>
             </div>
             <div class="col-md-3 mb-2">
-                <div class="card text-center p-3 shadow-sm">
+                <div class="card text-center p-3 shadow-sm h-100">
                     <h6>Average per Trip</h6>
                     <span id="avgMileage" class="fs-4 text-primary">0 km</span>
                 </div>
             </div>
             <div class="col-md-3 mb-2">
-                <div class="card text-center p-3 shadow-sm">
+                <div class="card text-center p-3 shadow-sm h-100">
                     <h6>Trips This Week</h6>
                     <span id="tripsWeek" class="fs-4 text-primary">0</span>
                 </div>
             </div>
             <div class="col-md-3 mb-2">
-                <div class="card text-center p-3 shadow-sm">
+                <div class="card text-center p-3 shadow-sm h-100">
                     <h6>Max Daily Mileage</h6>
                     <span id="maxTrip" class="fs-4 text-primary">0 km</span>
                 </div>
@@ -119,7 +119,7 @@
         <div class="row mb-3">
             <div class="col-md-3">
                 <label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
-                <input type="week" id="weekPicker" class="form-control" value="2025-W42">
+                <input type="week" id="weekPicker" class="form-control" value="2025-W43">
             </div>
         </div>
 
@@ -142,7 +142,8 @@
                 <div class="card shadow-sm p-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="text-primary mb-0">Trip Details</h5>
-                        <input type="text" id="tripSearch" placeholder="Search trips..." class="form-control" style="max-width: 300px;">
+                        <input type="text" id="tripSearch" placeholder="Search trips..." class="form-control"
+                            style="max-width: 300px;">
                     </div>
                     <div class="table-responsive">
                         <table class="table table-bordered text-center align-middle" id="tripsTable">
@@ -171,11 +172,30 @@
         let chartType = 'bar';
         let telemetryData = null;
 
-        // Fetch telemetry data
-        async function fetchTelemetryData() {
-            const response = await fetch('./telemetry_data.php');
-            const data = await response.json();
-            telemetryData = data;
+        // Convert week input (YYYY-Wxx) to start and end date
+        function getWeekDates(weekString) {
+            const [year, week] = weekString.split('-W').map(Number);
+            const firstDay = new Date(year, 0, 1 + (week - 1) * 7);
+            const dayOfWeek = firstDay.getDay();
+            const monday = new Date(firstDay);
+            monday.setDate(firstDay.getDate() - ((dayOfWeek + 6) % 7));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const format = d => d.toISOString().split('T')[0];
+            return {
+                start: format(monday),
+                end: format(sunday)
+            };
+        }
+
+        async function fetchTelemetryData(weekString = "2025-W43") {
+            const {
+                start,
+                end
+            } = getWeekDates(weekString);
+            const url = `./telemetry_data.php?start=${start}&end=${end}`;
+            const response = await fetch(url);
+            telemetryData = await response.json();
             updateAll();
         }
 
@@ -231,14 +251,14 @@
         function renderTable(mileage) {
             const tbody = document.getElementById('tripBody');
             tbody.innerHTML = telemetryData.labels.map((day, i) => `
-            <tr>
-                <td>${day}</td>
-                <td>${telemetryData.speed[i]}</td>
-                <td>${telemetryData.time[i]}</td>
-                <td>${mileage[i].toFixed(1)}</td>
-                <td>Sample Route</td>
-            </tr>
-        `).join('');
+                <tr>
+                    <td>${day}</td>
+                    <td>${telemetryData.speed[i] ?? 0}</td>
+                    <td>${telemetryData.time[i] ?? 0}</td>
+                    <td>${mileage[i]?.toFixed(1) ?? 0}</td>
+                    <td>Sample Route</td>
+                </tr>
+            `).join('');
         }
 
         // Chart type toggle
@@ -253,7 +273,7 @@
         document.getElementById('weekPicker').addEventListener('change', (e) => {
             const week = e.target.value;
             document.getElementById('chartTitle').textContent = `Mileage per Day (km) — ${week}`;
-            // Optionally, fetch different week data here later
+            fetchTelemetryData(week);
         });
 
         // Search filter
