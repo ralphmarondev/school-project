@@ -45,7 +45,6 @@
         }
 
         .card-metric {
-            height: 100%;
             min-height: 120px;
             display: flex;
             flex-direction: column;
@@ -89,6 +88,12 @@
             font-size: 0.85rem;
             padding: 3px 8px;
         }
+
+        #weekRangeLabel {
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 8px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -97,52 +102,51 @@
     <?php include "./globals/navbar.php"; ?>
 
     <div id="main" class="container-fluid py-4 mt-5">
-        <!-- Top Metric Cards -->
+        <!-- Metric Cards -->
         <div class="row mb-4">
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Battery</h6>
-                    <span id="battery" class="metric-value">95%</span>
+                    <span id="batteryMetric" class="metric-value">--</span>
                 </div>
             </div>
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Vibration</h6>
-                    <span id="vibration" class="metric-value">Normal</span>
+                    <span id="vibrationMetric" class="metric-value">--</span>
                 </div>
             </div>
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Temperature</h6>
-                    <span id="temperature" class="metric-value">35°C</span>
+                    <span id="temperatureMetric" class="metric-value">--</span>
                 </div>
             </div>
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Mileage</h6>
-                    <span id="mileage" class="metric-value">120 km</span>
+                    <span id="mileageMetric" class="metric-value">--</span>
                 </div>
             </div>
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Tire</h6>
-                    <span id="tire" class="metric-value">OK</span>
+                    <span id="tireMetric" class="metric-value">--</span>
                 </div>
             </div>
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Setup</h6>
-                    <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setupModal">
-                        Set Purchase Dates
-                    </button>
+                    <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setupModal">Set Purchase Dates</button>
                 </div>
             </div>
         </div>
 
-        <div class="row mb-4">
+        <div class="row mb-3">
             <div class="col-md-3">
                 <label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
                 <input type="week" id="weekPicker" class="form-control" value="2025-W42">
+                <div id="weekRangeLabel"></div>
             </div>
         </div>
 
@@ -154,7 +158,7 @@
                         Battery Voltage (V)
                         <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleBattery">Bar</button>
                     </h5>
-                    <canvas id="batteryChart" height="200"></canvas>
+                    <canvas id="batteryChart"></canvas>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
@@ -163,7 +167,7 @@
                         Motor Vibration (Hz)
                         <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleVibration">Bar</button>
                     </h5>
-                    <canvas id="vibrationChart" height="200"></canvas>
+                    <canvas id="vibrationChart"></canvas>
                 </div>
             </div>
         </div>
@@ -175,7 +179,7 @@
                         Speed per Day (km/h)
                         <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleSpeed">Bar</button>
                     </h5>
-                    <canvas id="speedChart" height="200"></canvas>
+                    <canvas id="speedChart"></canvas>
                 </div>
             </div>
             <div class="col-md-6 mb-3">
@@ -184,70 +188,13 @@
                         Time Traveled per Day (hours)
                         <button class="btn btn-outline-primary btn-sm toggle-btn" id="toggleTime">Bar</button>
                     </h5>
-                    <canvas id="timeChart" height="200"></canvas>
+                    <canvas id="timeChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
     <?php include "./globals/scripts.php"; ?>
-
-    <!-- Modal for Setup -->
-    <div class="modal fade" id="setupModal" tabindex="-1" aria-labelledby="setupModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-3">
-                <div class="modal-header">
-                    <h5 class="modal-title fw-bold" id="setupModalLabel">Set Purchase & Installation Details</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="setupForm">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-primary">Tire:</label>
-                            <div class="row g-2">
-                                <div class="col-7"><input type="date" class="form-control" id="tireDate"></div>
-                                <div class="col-5">
-                                    <select id="tireCondition" class="form-select">
-                                        <option value="new">Brand New</option>
-                                        <option value="second">Second Hand</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-primary">Battery:</label>
-                            <div class="row g-2">
-                                <div class="col-7"><input type="date" class="form-control" id="batteryDate"></div>
-                                <div class="col-5">
-                                    <select id="batteryCondition" class="form-select">
-                                        <option value="new">Brand New</option>
-                                        <option value="second">Second Hand</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-primary">Motor:</label>
-                            <div class="row g-2">
-                                <div class="col-7"><input type="date" class="form-control" id="motorDate"></div>
-                                <div class="col-5">
-                                    <select id="motorCondition" class="form-select">
-                                        <option value="new">Brand New</option>
-                                        <option value="second">Second Hand</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" data-bs-dismiss="modal" onclick="saveSetup()">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         let charts = {};
@@ -258,21 +205,40 @@
             time: document.getElementById('timeChart').getContext('2d')
         };
 
-        // Initial load
-        loadTelemetryData();
-
-        // Reload when week changes
-        document.getElementById('weekPicker').addEventListener('change', () => {
-            loadTelemetryData();
-        });
+        // Load immediately
+        document.addEventListener('DOMContentLoaded', loadTelemetryData);
+        document.getElementById('weekPicker').addEventListener('change', loadTelemetryData);
 
         function loadTelemetryData() {
-            fetch('./telemetry_data.php')
+            const weekValue = document.getElementById('weekPicker').value;
+            const [year, week] = weekValue.split('-W');
+            const startDate = getWeekStartDate(year, week);
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+
+            const startStr = startDate.toISOString().split('T')[0];
+            const endStr = endDate.toISOString().split('T')[0];
+
+            document.getElementById('weekRangeLabel').innerText =
+                `Week of ${startStr} to ${endStr}`;
+
+            fetch(`./telemetry_data.php?start=${startStr}&end=${endStr}`)
                 .then(res => res.json())
                 .then(data => {
+                    console.log('Telemetry Data:', data); // Debug check
                     renderAllCharts(data);
+                    updateMetrics(data);
                 })
-                .catch(err => console.error('Error loading data:', err));
+                .catch(err => console.error('Error loading telemetry data:', err));
+        }
+
+        function getWeekStartDate(year, week) {
+            const simple = new Date(year, 0, 1 + (week - 1) * 7);
+            const dow = simple.getDay();
+            const start = simple;
+            if (dow <= 4) start.setDate(simple.getDate() - simple.getDay() + 1);
+            else start.setDate(simple.getDate() + 8 - simple.getDay());
+            return start;
         }
 
         function renderAllCharts(data) {
@@ -312,12 +278,18 @@
                             data: data[item.key],
                             backgroundColor: item.color.replace('rgb', 'rgba').replace(')', ',0.6)'),
                             borderColor: item.color,
+                            borderWidth: 2,
                             fill: true
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
                     }
                 });
 
@@ -328,21 +300,16 @@
             });
         }
 
-        function capitalize(str) {
-            return str.charAt(0).toUpperCase() + str.slice(1);
+        function updateMetrics(data) {
+            document.getElementById('batteryMetric').innerText = data.battery.length ? `${data.battery.at(-1)} V` : '--';
+            document.getElementById('vibrationMetric').innerText = data.vibration.length ? `${data.vibration.at(-1)} Hz` : '--';
+            document.getElementById('temperatureMetric').innerText = data.temperature.battery.length ? `${data.temperature.battery.at(-1)}°C` : '--';
+            document.getElementById('mileageMetric').innerText = data.speed.length ? `${data.speed.at(-1)} km/h` : '--';
+            document.getElementById('tireMetric').innerText = data.tire.length ? `${data.tire.at(-1)} PSI` : '--';
         }
 
-        function saveSetup() {
-            const setup = {
-                tireDate: document.getElementById('tireDate').value,
-                tireCondition: document.getElementById('tireCondition').value,
-                batteryDate: document.getElementById('batteryDate').value,
-                batteryCondition: document.getElementById('batteryCondition').value,
-                motorDate: document.getElementById('motorDate').value,
-                motorCondition: document.getElementById('motorCondition').value,
-            };
-            console.log('Saved setup:', setup);
-            alert("Setup saved successfully!");
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
     </script>
 </body>
