@@ -166,26 +166,31 @@
     <?php include "./globals/scripts.php"; ?>
 
     <script>
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const ctx = document.getElementById('mileageChart').getContext('2d');
+        let mileageChart;
         let chartType = 'bar';
+        let telemetryData = null;
 
-        // Generate sample weekly trip data
-        let tripData = generateRandomData();
-
-        function generateRandomData() {
-            return days.map(() => ({
-                velocity: Math.floor(Math.random() * 40) + 40, // 40–80 km/h
-                time: (Math.random() * 2 + 1).toFixed(1), // 1–3 hours
-            }));
+        // Fetch telemetry data
+        async function fetchTelemetryData() {
+            const response = await fetch('./telemetry_data.php');
+            const data = await response.json();
+            telemetryData = data;
+            updateAll();
         }
 
         function calculateMileage() {
-            return tripData.map(d => d.velocity * d.time);
+            return telemetryData.speed.map((v, i) => v * telemetryData.time[i]);
         }
 
-        // Compute stats and update the cards
-        function updateStats() {
+        function updateAll() {
             const mileage = calculateMileage();
+            renderStats(mileage);
+            renderChart(mileage);
+            renderTable(mileage);
+        }
+
+        function renderStats(mileage) {
             const total = mileage.reduce((a, b) => a + b, 0);
             const avg = total / mileage.length;
             const max = Math.max(...mileage);
@@ -196,18 +201,15 @@
             document.getElementById('maxTrip').textContent = `${max.toFixed(1)} km`;
         }
 
-        // Chart creation
-        const ctx = document.getElementById('mileageChart').getContext('2d');
-        let mileageChart = createMileageChart(chartType);
-
-        function createMileageChart(type) {
-            return new Chart(ctx, {
-                type: type,
+        function renderChart(mileage) {
+            if (mileageChart) mileageChart.destroy();
+            mileageChart = new Chart(ctx, {
+                type: chartType,
                 data: {
-                    labels: days,
+                    labels: telemetryData.labels,
                     datasets: [{
                         label: 'Mileage (km)',
-                        data: calculateMileage(),
+                        data: mileage,
                         backgroundColor: 'rgba(174,14,14,0.6)',
                         borderColor: 'rgb(174,14,14)',
                         fill: true,
@@ -226,54 +228,44 @@
             });
         }
 
-        // Toggle chart type
+        function renderTable(mileage) {
+            const tbody = document.getElementById('tripBody');
+            tbody.innerHTML = telemetryData.labels.map((day, i) => `
+            <tr>
+                <td>${day}</td>
+                <td>${telemetryData.speed[i]}</td>
+                <td>${telemetryData.time[i]}</td>
+                <td>${mileage[i].toFixed(1)}</td>
+                <td>Sample Route</td>
+            </tr>
+        `).join('');
+        }
+
+        // Chart type toggle
         document.getElementById('toggleChartType').addEventListener('click', () => {
             chartType = chartType === 'bar' ? 'line' : 'bar';
-            mileageChart.destroy();
-            mileageChart = createMileageChart(chartType);
             document.getElementById('toggleChartType').textContent =
                 chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
+            updateAll();
         });
 
-        // Week change listener
+        // Week selector change
         document.getElementById('weekPicker').addEventListener('change', (e) => {
             const week = e.target.value;
             document.getElementById('chartTitle').textContent = `Mileage per Day (km) — ${week}`;
-            tripData = generateRandomData();
-            mileageChart.data.datasets[0].data = calculateMileage();
-            mileageChart.update();
-            renderTable();
-            updateStats();
+            // Optionally, fetch different week data here later
         });
-
-        // Render table
-        function renderTable() {
-            const tbody = document.getElementById('tripBody');
-            tbody.innerHTML = '';
-            days.forEach((day, i) => {
-                const row = `
-                    <tr>
-                        <td>${day}</td>
-                        <td>${tripData[i].velocity}</td>
-                        <td>${tripData[i].time}</td>
-                        <td>${(tripData[i].velocity * tripData[i].time).toFixed(1)}</td>
-                        <td>Sample Route</td>
-                    </tr>`;
-                tbody.innerHTML += row;
-            });
-        }
 
         // Search filter
         document.getElementById('tripSearch').addEventListener('keyup', function() {
             const filter = this.value.toLowerCase();
-            document.querySelectorAll('#tripsTable tbody tr').forEach(row => {
+            document.querySelectorAll('#tripBody tr').forEach(row => {
                 row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
             });
         });
 
         // Initialize
-        renderTable();
-        updateStats();
+        fetchTelemetryData();
     </script>
 </body>
 

@@ -5,12 +5,10 @@
 		:root {
 			--primary: rgb(174, 14, 14);
 			--primary-light: rgb(220, 60, 60);
-			--accent: #ff904c;
 			--background: #fff7f7;
 			--text: #222;
 			--border-radius: 12px;
 			--box-shadow: 0 2px 12px rgba(174, 14, 14, 0.08);
-			--transition: 0.3s cubic-bezier(.25, .8, .25, 1);
 		}
 
 		body {
@@ -67,7 +65,7 @@
 	<?php include "./globals/navbar.php"; ?>
 
 	<div id="main" class="container-fluid py-4 mt-5">
-		<!-- Top Motor Vibration Metrics -->
+		<!-- Top Motor Metrics -->
 		<div class="row mb-4">
 			<div class="col-md-3 mb-2">
 				<div class="card text-center p-3 shadow-sm">
@@ -103,7 +101,7 @@
 			</div>
 		</div>
 
-		<!-- Vibration Graph -->
+		<!-- Vibration Chart -->
 		<div class="row mb-4">
 			<div class="col-12">
 				<div class="card shadow-sm p-3">
@@ -116,7 +114,7 @@
 			</div>
 		</div>
 
-		<!-- Vibration Details Table -->
+		<!-- Data Table -->
 		<div class="row">
 			<div class="col-12">
 				<div class="card shadow-sm p-3">
@@ -126,15 +124,12 @@
 							<thead class="table-light">
 								<tr>
 									<th>Day</th>
-									<th>Average (Hz)</th>
-									<th>Min (Hz)</th>
-									<th>Max (Hz)</th>
+									<th>Vibration (Hz)</th>
 									<th>Status</th>
+									<th>Remarks</th>
 								</tr>
 							</thead>
-							<tbody id="vibrationBody">
-								<!-- Populated by JS -->
-							</tbody>
+							<tbody id="vibrationBody"></tbody>
 						</table>
 					</div>
 				</div>
@@ -145,57 +140,31 @@
 	<?php include "./globals/scripts.php"; ?>
 
 	<script>
-		const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+		const ctx = document.getElementById('vibrationChart').getContext('2d');
 		let chartType = 'bar';
+		let vibrationData = [];
+		let days = [];
 
-		// Generate sample vibration data for each day
-		let vibrationData = days.map(() => ({
-			readings: Array.from({
-				length: 5
-			}, () => (Math.random() * 2 + 2).toFixed(2)) // 2–4 Hz
-		}));
-
-		function getDailyAverages() {
-			return vibrationData.map(d =>
-				d.readings.reduce((a, b) => a + parseFloat(b), 0) / d.readings.length
-			);
-		}
-
-		function getStatus(avg) {
-			if (avg < 2.5) return 'Normal';
-			if (avg < 3.5) return 'Warning';
+		function getStatus(value) {
+			if (value < 2.5) return 'Normal';
+			if (value < 3.5) return 'Warning';
 			return 'Critical';
 		}
 
-		// Update cards
-		function updateSummary() {
-			const averages = getDailyAverages();
-			const allReadings = vibrationData.flatMap(d => d.readings.map(Number));
-			const avgVibration = (allReadings.reduce((a, b) => a + b, 0) / allReadings.length).toFixed(2);
-			const maxVibration = Math.max(...allReadings).toFixed(2);
-
-			document.getElementById('avgVibration').textContent = avgVibration + ' Hz';
-			document.getElementById('maxVibration').textContent = maxVibration + ' Hz';
-			document.getElementById('sampleCount').textContent = allReadings.length;
-
-			const status = getStatus(avgVibration);
-			const statusElem = document.getElementById('status');
-			statusElem.textContent = status;
-			statusElem.className = 'fs-4 ' + (status === 'Normal' ? 'text-success' : status === 'Warning' ? 'text-warning' : 'text-danger');
+		function getColorClass(status) {
+			if (status === 'Normal') return 'text-success';
+			if (status === 'Warning') return 'text-warning';
+			return 'text-danger';
 		}
 
-		// Chart setup
-		const ctx = document.getElementById('vibrationChart').getContext('2d');
-		let vibrationChart = createChart(chartType);
-
-		function createChart(type) {
+		function createChart(type, labels, data) {
 			return new Chart(ctx, {
 				type: type,
 				data: {
-					labels: days,
+					labels: labels,
 					datasets: [{
-						label: 'Average Vibration (Hz)',
-						data: getDailyAverages(),
+						label: 'Vibration (Hz)',
+						data: data,
 						backgroundColor: 'rgba(14,14,174,0.6)',
 						borderColor: 'rgb(14,14,174)',
 						fill: true,
@@ -214,55 +183,69 @@
 			});
 		}
 
-		// Toggle chart type
-		document.getElementById('toggleChartType').addEventListener('click', () => {
-			chartType = chartType === 'bar' ? 'line' : 'bar';
-			vibrationChart.destroy();
-			vibrationChart = createChart(chartType);
-			document.getElementById('toggleChartType').textContent =
-				chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
-		});
+		let vibrationChart = null;
 
-		// Update week
-		document.getElementById('weekPicker').addEventListener('change', (e) => {
-			const week = e.target.value;
-			document.getElementById('chartTitle').textContent = `Motor Vibration per Day (Hz) — ${week}`;
-			vibrationData = days.map(() => ({
-				readings: Array.from({
-					length: 5
-				}, () => (Math.random() * 2 + 2).toFixed(2))
-			}));
-			vibrationChart.data.datasets[0].data = getDailyAverages();
-			vibrationChart.update();
-			updateSummary();
+		function updateDashboard(data) {
+			days = data.labels;
+			vibrationData = data.vibration;
+
+			const avg = vibrationData.reduce((a, b) => a + b, 0) / vibrationData.length;
+			const max = Math.max(...vibrationData);
+			const count = vibrationData.length;
+			const status = getStatus(avg);
+
+			document.getElementById('avgVibration').textContent = avg.toFixed(2) + ' Hz';
+			document.getElementById('maxVibration').textContent = max.toFixed(2) + ' Hz';
+			document.getElementById('sampleCount').textContent = count;
+			document.getElementById('status').textContent = status;
+			document.getElementById('status').className = 'fs-4 ' + getColorClass(status);
+
 			renderTable();
-		});
+			updateChart();
+		}
 
-		// Render table
+		function updateChart() {
+			if (vibrationChart) vibrationChart.destroy();
+			vibrationChart = createChart(chartType, days, vibrationData);
+		}
+
 		function renderTable() {
 			const tbody = document.getElementById('vibrationBody');
 			tbody.innerHTML = '';
 			days.forEach((day, i) => {
-				const readings = vibrationData[i].readings.map(Number);
-				const avg = (readings.reduce((a, b) => a + b, 0) / readings.length).toFixed(2);
-				const min = Math.min(...readings).toFixed(2);
-				const max = Math.max(...readings).toFixed(2);
-				const status = getStatus(avg);
-
+				const val = vibrationData[i];
+				const status = getStatus(val);
 				tbody.innerHTML += `
-                    <tr>
-                        <td>${day}</td>
-                        <td>${avg}</td>
-                        <td>${min}</td>
-                        <td>${max}</td>
-                        <td><span class="badge bg-${status === 'Normal' ? 'success' : status === 'Warning' ? 'warning text-dark' : 'danger'}">${status}</span></td>
-                    </tr>`;
+					<tr>
+						<td>${day}</td>
+						<td>${val}</td>
+						<td class="${getColorClass(status)} fw-bold">${status}</td>
+						<td>${status === 'Normal' ? 'Stable' : status === 'Warning' ? 'Slight anomaly' : 'Check motor'}</td>
+					</tr>
+				`;
 			});
 		}
 
-		// Initialize
-		updateSummary();
-		renderTable();
+		document.getElementById('toggleChartType').addEventListener('click', () => {
+			chartType = chartType === 'bar' ? 'line' : 'bar';
+			updateChart();
+			document.getElementById('toggleChartType').textContent = chartType === 'bar' ? 'Switch to Line' : 'Switch to Bar';
+		});
+
+		document.getElementById('weekPicker').addEventListener('change', e => {
+			const week = e.target.value;
+			document.getElementById('chartTitle').textContent = `Motor Vibration per Day (Hz) — ${week}`;
+			loadTelemetryData();
+		});
+
+		function loadTelemetryData() {
+			fetch('telemetry_data.php')
+				.then(res => res.json())
+				.then(updateDashboard)
+				.catch(err => console.error('Error loading data:', err));
+		}
+
+		loadTelemetryData();
 	</script>
 </body>
 

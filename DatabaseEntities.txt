@@ -1,0 +1,15 @@
+Users:
+	- id
+	- username
+	- password
+	- full name
+
+Battery:
+	- id 
+
+Mileage:
+	- id 
+
+Tire:
+	- id 
+	

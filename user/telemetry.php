@@ -250,139 +250,88 @@
     </div>
 
     <script>
-        // Labels (common)
-        const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        let charts = {};
+        const ctx = {
+            battery: document.getElementById('batteryChart').getContext('2d'),
+            vibration: document.getElementById('vibrationChart').getContext('2d'),
+            speed: document.getElementById('speedChart').getContext('2d'),
+            time: document.getElementById('timeChart').getContext('2d')
+        };
 
-        // Battery Chart
-        let batteryType = 'bar';
-        let vibrationType = 'bar';
-        let speedType = 'bar';
-        let timeType = 'bar';
+        // Initial load
+        loadTelemetryData();
 
-        const batteryCtx = document.getElementById('batteryChart').getContext('2d');
-        const vibrationCtx = document.getElementById('vibrationChart').getContext('2d');
-        const speedCtx = document.getElementById('speedChart').getContext('2d');
-        const timeCtx = document.getElementById('timeChart').getContext('2d');
-
-        let batteryChart = createBatteryChart(batteryType);
-        let vibrationChart = createVibrationChart(vibrationType);
-        let speedChart = createSpeedChart(speedType);
-        let timeChart = createTimeChart(timeType);
-
-        // Battery Toggle
-        document.getElementById('toggleBattery').addEventListener('click', () => {
-            batteryType = batteryType === 'bar' ? 'line' : 'bar';
-            batteryChart.destroy();
-            batteryChart = createBatteryChart(batteryType);
-            document.getElementById('toggleBattery').textContent = batteryType === 'bar' ? 'Bar' : 'Line';
+        // Reload when week changes
+        document.getElementById('weekPicker').addEventListener('change', () => {
+            loadTelemetryData();
         });
 
-        // Vibration Toggle
-        document.getElementById('toggleVibration').addEventListener('click', () => {
-            vibrationType = vibrationType === 'bar' ? 'line' : 'bar';
-            vibrationChart.destroy();
-            vibrationChart = createVibrationChart(vibrationType);
-            document.getElementById('toggleVibration').textContent = vibrationType === 'bar' ? 'Bar' : 'Line';
-        });
+        function loadTelemetryData() {
+            fetch('./telemetry_data.php')
+                .then(res => res.json())
+                .then(data => {
+                    renderAllCharts(data);
+                })
+                .catch(err => console.error('Error loading data:', err));
+        }
 
-        // Speed Toggle
-        document.getElementById('toggleSpeed').addEventListener('click', () => {
-            speedType = speedType === 'bar' ? 'line' : 'bar';
-            speedChart.destroy();
-            speedChart = createSpeedChart(speedType);
-            document.getElementById('toggleSpeed').textContent = speedType === 'bar' ? 'Bar' : 'Line';
-        });
-
-        // Time Toggle
-        document.getElementById('toggleTime').addEventListener('click', () => {
-            timeType = timeType === 'bar' ? 'line' : 'bar';
-            timeChart.destroy();
-            timeChart = createTimeChart(timeType);
-            document.getElementById('toggleTime').textContent = timeType === 'bar' ? 'Bar' : 'Line';
-        });
-
-        // Chart Creators
-        function createBatteryChart(type) {
-            return new Chart(batteryCtx, {
-                type: type,
-                data: {
-                    labels: weekLabels,
-                    datasets: [{
-                        label: 'Battery Voltage (V)',
-                        data: [48, 47.8, 47.6, 47.4, 47.2, 47.1, 46.9],
-                        backgroundColor: 'rgba(174,14,14,0.6)',
-                        borderColor: 'rgb(174,14,14)',
-                        fill: true
-                    }]
+        function renderAllCharts(data) {
+            const config = [{
+                    key: 'battery',
+                    label: 'Battery Voltage (V)',
+                    color: 'rgb(174,14,14)'
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
+                {
+                    key: 'vibration',
+                    label: 'Motor Vibration (Hz)',
+                    color: 'rgb(14,14,174)'
+                },
+                {
+                    key: 'speed',
+                    label: 'Average Speed (km/h)',
+                    color: 'rgb(174,14,14)'
+                },
+                {
+                    key: 'time',
+                    label: 'Time Traveled (hours)',
+                    color: 'rgb(14,14,174)'
                 }
+            ];
+
+            config.forEach(item => {
+                const typeBtn = document.getElementById(`toggle${capitalize(item.key)}`);
+                const type = typeBtn.textContent.toLowerCase() === 'bar' ? 'bar' : 'line';
+                if (charts[item.key]) charts[item.key].destroy();
+
+                charts[item.key] = new Chart(ctx[item.key], {
+                    type,
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: item.label,
+                            data: data[item.key],
+                            backgroundColor: item.color.replace('rgb', 'rgba').replace(')', ',0.6)'),
+                            borderColor: item.color,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                typeBtn.onclick = () => {
+                    typeBtn.textContent = typeBtn.textContent === 'Bar' ? 'Line' : 'Bar';
+                    renderAllCharts(data);
+                };
             });
         }
 
-        function createVibrationChart(type) {
-            return new Chart(vibrationCtx, {
-                type: type,
-                data: {
-                    labels: weekLabels,
-                    datasets: [{
-                        label: 'Motor Vibration (Hz)',
-                        data: [2.1, 2.3, 2.2, 2.5, 2.4, 2.6, 2.3],
-                        backgroundColor: 'rgba(14,14,174,0.6)',
-                        borderColor: 'rgb(14,14,174)',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
-        function createSpeedChart(type) {
-            return new Chart(speedCtx, {
-                type: type,
-                data: {
-                    labels: weekLabels,
-                    datasets: [{
-                        label: 'Average Speed (km/h)',
-                        data: [45, 50, 48, 52, 55, 60, 58],
-                        backgroundColor: 'rgba(174,14,14,0.6)',
-                        borderColor: 'rgb(174,14,14)',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        function createTimeChart(type) {
-            return new Chart(timeCtx, {
-                type: type,
-                data: {
-                    labels: weekLabels,
-                    datasets: [{
-                        label: 'Time Traveled (hours)',
-                        data: [2.5, 3, 2, 4, 3.5, 5, 4.5],
-                        backgroundColor: 'rgba(14,14,174,0.6)',
-                        borderColor: 'rgb(14,14,174)',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
-            });
-        }
-
-        // Modal Save
         function saveSetup() {
             const setup = {
                 tireDate: document.getElementById('tireDate').value,
