@@ -124,3 +124,12 @@ Time:
 - 8am - 8pm => 12hrs
   
 
+Normal Vibration Values
+
+Idle / normal operating: 25 – 40 Hz → this is when the motor is running smoothly.
+
+Moderate load: 40 – 70 Hz → typical while driving or with some extra load.
+
+High / warning: 70 – 100 Hz → something may be off: misalignment, imbalance, worn bearings.
+
+Anything consistently above 80 – 100 Hz should raise a warning to inspect the motor.

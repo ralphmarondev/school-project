@@ -239,16 +239,44 @@
         }
 
         function renderAllCharts(data) {
-            const chartsConfig = [
-                { key: 'battery', label: 'Battery Voltage (V)', color: 'rgb(174,14,14)', min: 30, max: 72, unit: 'V' },
-                { key: 'vibration', label: 'Motor Vibration (Hz)', color: 'rgb(14,14,174)', min: 0, max: 100, unit: 'Hz' },
-                { key: 'speed', label: 'Average Speed (km/h)', color: 'rgb(174,14,14)', min: 0, max: 80, unit: 'km/h' },
-                { key: 'time', label: 'Time Traveled (hours)', color: 'rgb(14,14,174)', min: 0, max: 12, unit: 'hrs' }
+            const chartsConfig = [{
+                    key: 'battery',
+                    label: 'Battery Voltage (V)',
+                    color: 'rgb(174,14,14)',
+                    unit: 'V',
+                    min: 30,
+                    max: 72
+                },
+                {
+                    key: 'vibration',
+                    label: 'Motor Vibration (Hz)',
+                    color: 'rgb(14,14,174)',
+                    unit: 'Hz',
+                    min: 25,
+                    max: 100
+                },
+                {
+                    key: 'speed',
+                    label: 'Average Speed (km/h)',
+                    color: 'rgb(174,14,14)',
+                    unit: 'km/h',
+                    min: 0,
+                    max: 80
+                },
+                {
+                    key: 'time',
+                    label: 'Time Traveled (hours)',
+                    color: 'rgb(14,14,174)',
+                    unit: 'hrs',
+                    min: 0,
+                    max: 12
+                }
             ];
 
             chartsConfig.forEach(item => {
                 const typeBtn = document.getElementById(`toggle${capitalize(item.key)}`);
                 const type = charts[item.key]?.config.type || 'bar';
+                const values = data[item.key];
 
                 if (!charts[item.key]) {
                     charts[item.key] = new Chart(ctx[item.key], {
@@ -257,7 +285,7 @@
                             labels: data.labels,
                             datasets: [{
                                 label: item.label,
-                                data: data[item.key],
+                                data: values,
                                 backgroundColor: item.color.replace('rgb', 'rgba').replace(')', ',0.6)'),
                                 borderColor: item.color,
                                 borderWidth: 2,
@@ -287,7 +315,9 @@
                     });
                 } else {
                     charts[item.key].data.labels = data.labels;
-                    charts[item.key].data.datasets[0].data = data[item.key];
+                    charts[item.key].data.datasets[0].data = values;
+                    charts[item.key].options.scales.y.min = item.min;
+                    charts[item.key].options.scales.y.max = item.max;
                     charts[item.key].update();
                 }
 
