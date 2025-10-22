@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -62,11 +60,8 @@
 
             <div class="row ">
                 <div class="col-11 col-lg-10 text-center mx-auto mt-1">
-                    <!-- <img src="../assets/coea_logo.png" class="mt-3 mb-2" alt="" style="height: 120px; width: 120px; margin: auto; display: block;" class="mb-3"> -->
-
-                    <!-- <img src="https://1000logos.net/wp-content/uploads/2019/03/PNP-Logo.png" alt="" class="mt-3" style="height: 100px; width: 200px;"> -->
                     <img src="./assets/emob_logo_f.png" alt="" style="height: 100px; width: 100px;">
-                    <h3 class="" style="  ">C-Trike Predictive Maintenance and Dashboard</h3>
+                    <h3>C-Trike Predictive Maintenance and Dashboard</h3>
 
                 </div>
                 <div class="col-sm-10 col-md-5 col-xl-4 mx-auto d-table ">
@@ -74,7 +69,7 @@
 
                         <div class="text-center ">
 
-                            <h3 class="" style="">Welcome Back!</h3>
+                            <h3>Welcome Back!</h3>
                             <p class="lead ">
                                 Log in to your account to continue
                             </p>
@@ -84,9 +79,9 @@
                             <div class="card-body">
 
                                 <div class="m-sm-3">
-                              
-                                       
-                                  
+
+
+
                                     <form method="post" class="" action="">
                                         <div class="mb-3">
                                             <label class="form-label " style="font-weight: bold;">Username</label>
