@@ -135,33 +135,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Trip Table -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="text-primary mb-0">Trip Details</h5>
-                        <input type="text" id="tripSearch" placeholder="Search trips..." class="form-control"
-                            style="max-width: 300px;">
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center align-middle" id="tripsTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Day</th>
-                                    <th>Velocity (km/h)</th>
-                                    <th>Time Traveled (h)</th>
-                                    <th>Mileage (km)</th>
-                                    <th>Route</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tripBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <?php include "./globals/scripts.php"; ?>
@@ -207,7 +180,6 @@
             const mileage = calculateMileage();
             renderStats(mileage);
             renderChart(mileage);
-            renderTable(mileage);
         }
 
         function renderStats(mileage) {
@@ -241,24 +213,16 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            min: 0,
+                            max: 1000, // max possible mileage
+                            ticks: {
+                                stepSize: 100 // optional for readability
+                            }
                         }
                     }
                 }
             });
-        }
-
-        function renderTable(mileage) {
-            const tbody = document.getElementById('tripBody');
-            tbody.innerHTML = telemetryData.labels.map((day, i) => `
-                <tr>
-                    <td>${day}</td>
-                    <td>${telemetryData.speed[i] ?? 0}</td>
-                    <td>${telemetryData.time[i] ?? 0}</td>
-                    <td>${mileage[i]?.toFixed(1) ?? 0}</td>
-                    <td>Sample Route</td>
-                </tr>
-            `).join('');
         }
 
         // Chart type toggle
@@ -274,14 +238,6 @@
             const week = e.target.value;
             document.getElementById('chartTitle').textContent = `Mileage per Day (km) — ${week}`;
             fetchTelemetryData(week);
-        });
-
-        // Search filter
-        document.getElementById('tripSearch').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#tripBody tr').forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-            });
         });
 
         // Initialize

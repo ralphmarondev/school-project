@@ -148,3 +148,5 @@ Anything consistently above 80 – 100 Hz should raise a warning to inspec
 
 **Key idea:** Most metrics just show the **latest value** in the selected week. Charts use all daily values. Thresholds (like vibration > 40 Hz) can trigger warnings later.
 
+## Mileage
+Max Mileage=Max Speed×Max Time=80×12=960 km
