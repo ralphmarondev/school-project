@@ -91,49 +91,6 @@
         <!-- Mini Trend Charts -->
         <div class="row mb-4" id="chartsContainer"></div>
 
-        <!-- Maintenance Alerts -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm p-3">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="text-primary mb-0">Recent Maintenance Alerts</h5>
-                        <input type="text" id="alertsSearch" placeholder="Search alerts..." class="form-control w-auto">
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center align-middle" id="alertsTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Component</th>
-                                    <th>Severity</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2025-10-20</td>
-                                    <td>Battery</td>
-                                    <td><span class="badge bg-warning text-dark">Warning</span></td>
-                                    <td>Check connectors</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-10-20</td>
-                                    <td>Motor</td>
-                                    <td><span class="badge bg-danger">Critical</span></td>
-                                    <td>Stop vehicle, inspect motor</td>
-                                </tr>
-                                <tr>
-                                    <td>2025-10-19</td>
-                                    <td>Tire</td>
-                                    <td><span class="badge bg-success">Normal</span></td>
-                                    <td>None</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <?php include "./globals/scripts.php"; ?>
@@ -146,20 +103,15 @@
                     renderTopMetrics(data);
                     renderCharts(data);
                 });
-
-            document.getElementById('alertsSearch').addEventListener('keyup', function() {
-                const filter = this.value.toLowerCase();
-                document.querySelectorAll('#alertsTable tbody tr').forEach(row => {
-                    row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-                });
-            });
         });
 
         function renderTopMetrics(data) {
+            if (!data.labels || !data.labels.length) return;
+
             const lastIndex = data.labels.length - 1;
             const metrics = [{
                     label: 'Battery',
-                    value: `${data.battery[lastIndex]} V`,
+                    value: data.battery[lastIndex] !== null ? `${data.battery[lastIndex]} V` : '--',
                     desc: 'Current voltage'
                 },
                 {
@@ -169,12 +121,12 @@
                 },
                 {
                     label: 'Mileage',
-                    value: `${Math.round(data.speed[lastIndex] * data.time[lastIndex])} km`,
+                    value: data.speed[lastIndex] !== null && data.time[lastIndex] !== null ? `${Math.round(data.speed[lastIndex] * data.time[lastIndex])} km` : '--',
                     desc: 'Today’s distance'
                 },
                 {
                     label: 'Temperature',
-                    value: `${data.temperature[lastIndex]}°C`,
+                    value: data.temperature[lastIndex] !== null ? `${data.temperature[lastIndex]}°C` : '--',
                     desc: 'Current sensor temp'
                 },
                 {
@@ -186,14 +138,14 @@
 
             const container = document.getElementById("topMetrics");
             container.innerHTML = metrics.map(m => `
-        <div class="col-md-2 col-6 mb-2">
-            <div class="card text-center p-3 shadow-sm card-fixed">
-                <h6>${m.label}</h6>
-                <span class="fs-4">${m.value}</span>
-                <small class="text-muted">${m.desc}</small>
-            </div>
-        </div>
-    `).join("");
+                <div class="col-md-2 col-6 mb-2">
+                    <div class="card text-center p-3 shadow-sm card-fixed">
+                        <h6>${m.label}</h6>
+                        <span class="fs-4">${m.value}</span>
+                        <small class="text-muted">${m.desc}</small>
+                    </div>
+                </div>
+            `).join("");
         }
 
         function renderCharts(data) {
@@ -201,34 +153,39 @@
                     id: 'speedChart',
                     label: 'Speed Trend (Last 7 Days)',
                     values: data.speed,
-                    color: 'rgb(0,128,0)'
+                    color: 'rgb(0,128,0)',
+                    min: 0,
+                    max: Math.max(...data.speed) + 10
                 },
                 {
                     id: 'batteryChart',
                     label: 'Battery Voltage (Last 7 Days)',
                     values: data.battery,
-                    color: 'rgb(174,14,14)'
+                    color: 'rgb(174,14,14)',
+                    min: 30,
+                    max: 72
                 }
             ];
 
             const container = document.getElementById("chartsContainer");
             container.innerHTML = charts.map(c => `
-        <div class="col-lg-6 col-12 mb-3">
-            <div class="card shadow-sm p-3 chart-card">
-                <h5 class="text-primary mb-3">${c.label}</h5>
-                <canvas id="${c.id}"></canvas>
-            </div>
-        </div>
-    `).join("");
+                <div class="col-lg-6 col-12 mb-3">
+                    <div class="card shadow-sm p-3 chart-card">
+                        <h5 class="text-primary mb-3">${c.label}</h5>
+                        <canvas id="${c.id}"></canvas>
+                    </div>
+                </div>
+            `).join("");
 
             charts.forEach(c => {
+                const validData = c.values.map(v => v !== null ? v : null);
                 new Chart(document.getElementById(c.id).getContext('2d'), {
                     type: 'line',
                     data: {
                         labels: data.labels,
                         datasets: [{
                             label: c.label,
-                            data: c.values,
+                            data: validData,
                             borderColor: c.color,
                             backgroundColor: c.color.replace('rgb', 'rgba').replace(')', ',0.2)'),
                             fill: true,
@@ -245,9 +202,11 @@
                         },
                         scales: {
                             y: {
-                                beginAtZero: false
+                                min: c.min,
+                                max: c.max
                             }
-                        }
+                        },
+                        spanGaps: false
                     }
                 });
             });
