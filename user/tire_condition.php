@@ -70,25 +70,19 @@
 	<div id="main" class="container-fluid py-4 mt-5">
 		<!-- Tire Stats Cards -->
 		<div class="row mb-4">
-			<div class="col-md-3 mb-2">
+			<div class="col-md-4 mb-2">
 				<div class="card text-center p-3">
 					<h6>Average Pressure</h6>
 					<span id="avgPressure" class="fs-4 text-primary">-- PSI</span>
 				</div>
 			</div>
-			<div class="col-md-3 mb-2">
-				<div class="card text-center p-3">
-					<h6>Average Tread Depth</h6>
-					<span id="avgTread" class="fs-4 text-primary">-- mm</span>
-				</div>
-			</div>
-			<div class="col-md-3 mb-2">
+			<div class="col-md-4 mb-2">
 				<div class="card text-center p-3">
 					<h6>Status</h6>
 					<span id="status" class="fs-4 text-success">Normal</span>
 				</div>
 			</div>
-			<div class="col-md-3 mb-2">
+			<div class="col-md-4 mb-2">
 				<div class="card text-center p-3">
 					<h6>Total Checks</h6>
 					<span id="checkCount" class="fs-4 text-primary">--</span>
@@ -116,31 +110,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Tire Condition Table -->
-		<div class="row">
-			<div class="col-12">
-				<div class="card shadow-sm p-3">
-					<div class="d-flex justify-content-between align-items-center mb-3">
-						<h5 class="text-primary mb-0">Tire Condition Details</h5>
-						<input type="text" id="tireSearch" placeholder="Search..." class="form-control" style="max-width: 300px;">
-					</div>
-					<div class="table-responsive">
-						<table class="table table-bordered text-center align-middle" id="tireTable">
-							<thead class="table-light">
-								<tr>
-									<th>Day</th>
-									<th>Pressure (PSI)</th>
-									<th>Tread Depth (mm)</th>
-									<th>Status</th>
-								</tr>
-							</thead>
-							<tbody id="tireBody"></tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
 	</div>
 
 	<?php include "./globals/scripts.php"; ?>
@@ -150,11 +119,11 @@
 		let tireChart;
 		let tireData = [];
 
-		// --- Helper Functions ---
-		function getStatus(p, t) {
-			if (p >= 32 && t >= 4) return 'Normal';
-			if ((p >= 28 && p < 32) || (t >= 2 && t < 4)) return 'Warning';
-			return 'Replace Soon';
+		// --- Status Logic for Tricycle ---
+		function getStatus(p) {
+			if (p >= 32 && p <= 36) return 'Normal';
+			if ((p >= 28 && p < 32) || (p > 36 && p <= 38)) return 'Warning';
+			return 'Critical';
 		}
 
 		function getColorClass(status) {
@@ -187,49 +156,56 @@
 				const res = await fetch(`telemetry_data.php?start=${start}&end=${end}`);
 				const data = await res.json();
 
-				// Map fetched tire pressure data
+				// Only map real data, skip empty entries
 				tireData = data.labels.map((day, i) => ({
 					day: day,
-					pressure: parseFloat(data.tire[i] ?? 30),
-					tread: (Math.max(2, 5 - i * 0.3)).toFixed(1) // simulated tread wear
-				}));
+					pressure: data.tire[i] != null ? parseFloat(data.tire[i]) : null
+				})).filter(d => d.pressure != null);
 
 				updateDashboard();
-				renderTable();
 				updateChart();
 			} catch (err) {
 				console.error("Error loading tire data:", err);
+				tireData = [];
+				updateDashboard();
+				updateChart();
 			}
 		}
 
 		// --- Update Summary Cards ---
 		function updateDashboard() {
-			if (!tireData.length) return;
-			const avgPressure = (tireData.reduce((a, b) => a + parseFloat(b.pressure), 0) / tireData.length).toFixed(1);
-			const avgTread = (tireData.reduce((a, b) => a + parseFloat(b.tread), 0) / tireData.length).toFixed(1);
+			if (!tireData.length) {
+				document.getElementById('avgPressure').textContent = '-- PSI';
+				document.getElementById('status').textContent = '--';
+				document.getElementById('status').className = 'fs-4';
+				document.getElementById('checkCount').textContent = '0';
+				return;
+			}
 
+			const avgPressure = (tireData.reduce((a, b) => a + b.pressure, 0) / tireData.length).toFixed(1);
 			document.getElementById('avgPressure').textContent = `${avgPressure} PSI`;
-			document.getElementById('avgTread').textContent = `${avgTread} mm`;
-			document.getElementById('checkCount').textContent = tireData.length;
-
-			const status = getStatus(avgPressure, avgTread);
+			const status = getStatus(avgPressure);
 			const statusElem = document.getElementById('status');
 			statusElem.textContent = status;
 			statusElem.className = 'fs-4 ' + getColorClass(status);
+			document.getElementById('checkCount').textContent = tireData.length;
 		}
 
-		// --- Render Chart ---
 		function updateChart() {
 			const ctx = document.getElementById('tireChart').getContext('2d');
 			if (tireChart) tireChart.destroy();
 
+			// Only include data points that are not null
+			const chartLabels = tireData.map(d => d.day);
+			const chartValues = tireData.map(d => d.pressure);
+
 			tireChart = new Chart(ctx, {
 				type: chartType,
 				data: {
-					labels: tireData.map(d => d.day),
+					labels: chartLabels,
 					datasets: [{
 						label: 'Pressure (PSI)',
-						data: tireData.map(d => d.pressure),
+						data: chartValues.map(v => v ?? null), // keep nulls empty
 						backgroundColor: 'rgba(174,14,14,0.6)',
 						borderColor: 'rgb(174,14,14)',
 						fill: true,
@@ -241,40 +217,14 @@
 					maintainAspectRatio: false,
 					scales: {
 						y: {
-							beginAtZero: true
+							min: 28,
+							max: 38
 						}
-					}
+					},
+					spanGaps: false // ensures nulls are skipped, not plotted as zero
 				}
 			});
 		}
-
-		// --- Render Table ---
-		function renderTable() {
-			const tbody = document.getElementById('tireBody');
-			tbody.innerHTML = '';
-			tireData.forEach(({
-				day,
-				pressure,
-				tread
-			}) => {
-				const status = getStatus(pressure, tread);
-				tbody.innerHTML += `
-					<tr>
-						<td>${day}</td>
-						<td>${pressure}</td>
-						<td>${tread}</td>
-						<td class="${getColorClass(status)} fw-bold">${status}</td>
-					</tr>`;
-			});
-		}
-
-		// --- Search Filter ---
-		document.getElementById('tireSearch').addEventListener('keyup', function() {
-			const filter = this.value.toLowerCase();
-			document.querySelectorAll('#tireTable tbody tr').forEach(row => {
-				row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-			});
-		});
 
 		// --- Toggle Chart Type ---
 		document.getElementById('toggleChartType').addEventListener('click', () => {

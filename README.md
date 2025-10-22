@@ -148,5 +148,12 @@ Anything consistently above 80 – 100 Hz should raise a warning to inspec
 
 **Key idea:** Most metrics just show the **latest value** in the selected week. Charts use all daily values. Thresholds (like vibration > 40 Hz) can trigger warnings later.
 
+
 ## Mileage
 Max Mileage=Max Speed×Max Time=80×12=960 km
+
+
+## Tires
+Normal tire pressure for tricycles: 32–36 PSI.
+
+Warning: 28–32 PSI or 36–38 PSI.
