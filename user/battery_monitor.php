@@ -67,21 +67,6 @@
 			font-size: 0.85rem;
 			padding: 4px 10px;
 		}
-
-		.status-normal {
-			color: green;
-			font-weight: bold;
-		}
-
-		.status-warning {
-			color: orange;
-			font-weight: bold;
-		}
-
-		.status-critical {
-			color: red;
-			font-weight: bold;
-		}
 	</style>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -114,7 +99,7 @@
 			<div class="col-md-3 mb-2">
 				<div class="card text-center p-3 shadow-sm h-100">
 					<h6>Status</h6>
-					<span id="batteryStatus" class="fs-4 status-normal">Normal</span>
+					<span id="batteryStatus" class="fs-4">--</span>
 				</div>
 			</div>
 		</div>
@@ -139,31 +124,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Battery Table -->
-		<div class="row">
-			<div class="col-12">
-				<div class="card shadow-sm p-3">
-					<div class="d-flex justify-content-between align-items-center mb-3">
-						<h5 class="text-primary mb-0">Battery Readings</h5>
-						<input type="text" id="batterySearch" placeholder="Search readings..." class="form-control" style="max-width: 300px;">
-					</div>
-					<div class="table-responsive">
-						<table class="table table-bordered text-center align-middle" id="batteryTable">
-							<thead class="table-light">
-								<tr>
-									<th>Day</th>
-									<th>Voltage (V)</th>
-									<th>Status</th>
-									<th>Remarks</th>
-								</tr>
-							</thead>
-							<tbody id="batteryBody"></tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
 	</div>
 
 	<?php include "./globals/scripts.php"; ?>
@@ -175,7 +135,6 @@
 
 		async function loadBatteryData(week) {
 			try {
-				// Convert week (YYYY-W##) into Monday–Sunday date range
 				const [year, weekNum] = week.split('-W').map(Number);
 				const monday = getDateOfISOWeek(weekNum, year);
 				const sunday = new Date(monday);
@@ -193,7 +152,6 @@
 				}));
 
 				updateMetrics();
-				renderTable();
 				updateChart();
 			} catch (err) {
 				console.error('Failed to load battery data:', err);
@@ -204,28 +162,20 @@
 			const simple = new Date(year, 0, 1 + (week - 1) * 7);
 			const dow = simple.getDay();
 			const ISOweekStart = simple;
-			if (dow <= 4)
-				ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-			else
-				ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+			if (dow <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+			else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
 			return ISOweekStart;
 		}
 
 		function getStatus(voltage) {
-			if (voltage >= 12.4) return 'Normal';
-			if (voltage >= 12.0) return 'Warning';
+			if (voltage >= 60) return 'Normal';
+			if (voltage >= 45) return 'Warning';
 			return 'Critical';
-		}
-
-		function getStatusClass(status) {
-			if (status === 'Normal') return 'status-normal';
-			if (status === 'Warning') return 'status-warning';
-			return 'status-critical';
 		}
 
 		function updateMetrics() {
 			const voltages = batteryData.map(d => d.voltage);
-			if (voltages.length === 0) return;
+			if (!voltages.length) return;
 
 			const avg = voltages.reduce((a, b) => a + b, 0) / voltages.length;
 			const max = Math.max(...voltages);
@@ -238,10 +188,9 @@
 			const status = getStatus(avg);
 			const elem = document.getElementById('batteryStatus');
 			elem.textContent = status;
-			elem.className = getStatusClass(status) + ' fs-4';
+			elem.className = 'fs-4 ' + (status === 'Normal' ? 'text-success' : status === 'Warning' ? 'text-warning' : 'text-danger');
 		}
 
-		// Create chart
 		const ctx = document.getElementById('voltageChart').getContext('2d');
 		let voltageChart = createChart(chartType);
 
@@ -251,7 +200,7 @@
 				data: {
 					labels: [],
 					datasets: [{
-						label: 'Voltage (V)',
+						label: 'Voltage (V) [Min: 30, Max: 72]',
 						data: [],
 						backgroundColor: 'rgba(174,14,14,0.6)',
 						borderColor: 'rgb(174,14,14)',
@@ -265,8 +214,8 @@
 					scales: {
 						y: {
 							beginAtZero: false,
-							min: 10,
-							max: 15
+							min: 30,
+							max: 72
 						}
 					}
 				}
@@ -292,29 +241,6 @@
 			const week = e.target.value;
 			document.getElementById('chartTitle').textContent = `Battery Voltage per Day (V) — ${week}`;
 			loadBatteryData(week);
-		});
-
-		function renderTable() {
-			const tbody = document.getElementById('batteryBody');
-			tbody.innerHTML = '';
-			batteryData.forEach(d => {
-				const status = getStatus(d.voltage);
-				const row = `
-					<tr>
-						<td>${d.day}</td>
-						<td>${d.voltage.toFixed(2)}</td>
-						<td class="${getStatusClass(status)}">${status}</td>
-						<td>${status === 'Normal' ? 'Stable' : status === 'Warning' ? 'Slight drop' : 'Check immediately'}</td>
-					</tr>`;
-				tbody.innerHTML += row;
-			});
-		}
-
-		document.getElementById('batterySearch').addEventListener('keyup', function() {
-			const filter = this.value.toLowerCase();
-			document.querySelectorAll('#batteryTable tbody tr').forEach(row => {
-				row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
-			});
 		});
 
 		loadBatteryData(weekPicker.value);
