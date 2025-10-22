@@ -65,30 +65,24 @@
 	<?php include "./globals/navbar.php"; ?>
 
 	<div id="main" class="container-fluid py-4 mt-5">
-		<!-- Top Motor Metrics -->
+		<!-- Top Vibration Metrics -->
 		<div class="row mb-4">
-			<div class="col-md-3 mb-2">
+			<div class="col-md-4 mb-2">
 				<div class="card text-center p-3 shadow-sm">
 					<h6>Average Vibration</h6>
 					<span id="avgVibration" class="fs-4">-- Hz</span>
 				</div>
 			</div>
-			<div class="col-md-3 mb-2">
+			<div class="col-md-4 mb-2">
 				<div class="card text-center p-3 shadow-sm">
 					<h6>Max Vibration</h6>
 					<span id="maxVibration" class="fs-4">-- Hz</span>
 				</div>
 			</div>
-			<div class="col-md-3 mb-2">
+			<div class="col-md-4 mb-2">
 				<div class="card text-center p-3 shadow-sm">
 					<h6>Status</h6>
 					<span id="status" class="fs-4 text-success">Normal</span>
-				</div>
-			</div>
-			<div class="col-md-3 mb-2">
-				<div class="card text-center p-3 shadow-sm">
-					<h6>Total Samples</h6>
-					<span id="sampleCount" class="fs-4">--</span>
 				</div>
 			</div>
 		</div>
@@ -113,28 +107,6 @@
 				</div>
 			</div>
 		</div>
-
-		<!-- Data Table -->
-		<div class="row">
-			<div class="col-12">
-				<div class="card shadow-sm p-3">
-					<h5 class="text-primary mb-3">Vibration Details</h5>
-					<div class="table-responsive">
-						<table class="table table-bordered text-center align-middle" id="vibrationTable">
-							<thead class="table-light">
-								<tr>
-									<th>Day</th>
-									<th>Vibration (Hz)</th>
-									<th>Status</th>
-									<th>Remarks</th>
-								</tr>
-							</thead>
-							<tbody id="vibrationBody"></tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</div>
 	</div>
 
 	<?php include "./globals/scripts.php"; ?>
@@ -145,14 +117,14 @@
 		let vibrationChart = null;
 
 		function getStatus(value) {
-			if (value < 2.5) return 'Normal';
-			if (value < 3.5) return 'Warning';
-			return 'Critical';
+			if (value <= 40) return 'Normal';
+			if (value <= 70) return 'Moderate';
+			return 'Warning';
 		}
 
 		function getColorClass(status) {
 			if (status === 'Normal') return 'text-success';
-			if (status === 'Warning') return 'text-warning';
+			if (status === 'Moderate') return 'text-warning';
 			return 'text-danger';
 		}
 
@@ -162,7 +134,7 @@
 				data: {
 					labels: labels,
 					datasets: [{
-						label: 'Vibration (Hz)',
+						label: 'Vibration (Hz) [Min: 25, Max: 100]',
 						data: data,
 						backgroundColor: 'rgba(14,14,174,0.6)',
 						borderColor: 'rgb(14,14,174)',
@@ -175,7 +147,8 @@
 					maintainAspectRatio: false,
 					scales: {
 						y: {
-							beginAtZero: true
+							min: 25,
+							max: 100
 						}
 					}
 				}
@@ -188,39 +161,19 @@
 
 			const avg = vibrationData.reduce((a, b) => a + b, 0) / vibrationData.length || 0;
 			const max = Math.max(...vibrationData, 0);
-			const count = vibrationData.length;
 			const status = getStatus(avg);
 
 			document.getElementById('avgVibration').textContent = avg.toFixed(2) + ' Hz';
 			document.getElementById('maxVibration').textContent = max.toFixed(2) + ' Hz';
-			document.getElementById('sampleCount').textContent = count;
 			document.getElementById('status').textContent = status;
 			document.getElementById('status').className = 'fs-4 ' + getColorClass(status);
 
-			renderTable(days, vibrationData);
 			updateChart(days, vibrationData);
 		}
 
 		function updateChart(days, vibrationData) {
 			if (vibrationChart) vibrationChart.destroy();
 			vibrationChart = createChart(chartType, days, vibrationData);
-		}
-
-		function renderTable(days, vibrationData) {
-			const tbody = document.getElementById('vibrationBody');
-			tbody.innerHTML = '';
-			days.forEach((day, i) => {
-				const val = vibrationData[i];
-				const status = getStatus(val);
-				tbody.innerHTML += `
-					<tr>
-						<td>${day}</td>
-						<td>${val.toFixed(2)}</td>
-						<td class="${getColorClass(status)} fw-bold">${status}</td>
-						<td>${status === 'Normal' ? 'Stable' : status === 'Warning' ? 'Slight anomaly' : 'Check motor'}</td>
-					</tr>
-				`;
-			});
 		}
 
 		document.getElementById('toggleChartType').addEventListener('click', () => {
