@@ -137,7 +137,7 @@
             <div class="col-md-2 mb-2">
                 <div class="card card-metric text-center p-3">
                     <h6 class="metric-label">Setup</h6>
-                    <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setupModal">Set Purchase Dates</button>
+                    <button class="btn btn-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#setupModal">Set Installation Dates</button>
                 </div>
             </div>
         </div>
@@ -146,7 +146,7 @@
             <div class="col-md-3">
                 <label for="weekPicker" class="form-label fw-bold text-primary">Select Week:</label>
                 <input type="week" id="weekPicker" class="form-control" value="2025-W42">
-                <div id="weekRangeLabel"></div>
+                <!-- <div id="weekRangeLabel"></div> -->
             </div>
         </div>
 
@@ -194,7 +194,47 @@
         </div>
     </div>
 
+    <!-- Setup Modal -->
+    <div class="modal fade" id="setupModal" tabindex="-1" aria-labelledby="setupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="setupModalLabel">Set Installation Date & Type</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="purchaseForm">
+                        <?php
+                        $components = ['Tire', 'Battery', 'Motor'];
+                        foreach ($components as $component) {
+                            echo "
+                            <div class='row mb-3 align-items-center'>
+                                <div class='col-md-6'>
+                                    <label class='form-label'>$component Installation Date</label>
+                                    <input type='date' class='form-control' name='{$component}_date'>
+                                </div>
+                                <div class='col-md-6'>
+                                    <label class='form-label'>$component Type</label>
+                                    <select class='form-select' name='{$component}_type'>
+                                        <option value='Brand New'>Brand New</option>
+                                        <option value='2nd Hand'>2nd Hand</option>
+                                    </select>
+                                </div>
+                            </div>
+                            ";
+                        }
+                        ?>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php include "./globals/scripts.php"; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         let charts = {};
@@ -218,8 +258,8 @@
             const startStr = startDate.toISOString().split('T')[0];
             const endStr = endDate.toISOString().split('T')[0];
 
-            document.getElementById('weekRangeLabel').innerText =
-                `Week of ${startStr} to ${endStr}`;
+            // document.getElementById('weekRangeLabel').innerText =
+            //     `Week of ${startStr} to ${endStr}`;
 
             fetch(`./telemetry_data.php?start=${startStr}&end=${endStr}`)
                 .then(res => res.json())
