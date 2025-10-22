@@ -133,3 +133,18 @@ Moderate load: 40 – 70 Hz → typical while driving or with some extra l
 High / warning: 70 – 100 Hz → something may be off: misalignment, imbalance, worn bearings.
 
 Anything consistently above 80 – 100 Hz should raise a warning to inspect the motor.
+
+
+## Telemetry
+
+| Metric                     | Calculation / Formula                         | Notes / Normal Range              |
+| -------------------------- | --------------------------------------------- | --------------------------------- |
+| **Battery (V)**            | Last recorded battery voltage                 | Typical: 30–72 V                  |
+| **Vibration (Hz)**         | Last recorded vibration reading               | Normal: 25–40 Hz, Warning: >40 Hz |
+| **Temperature (°C)**       | Last recorded motor temperature               | Normal: 35–60°C                   |
+| **Mileage / Speed (km/h)** | Distance ÷ Time traveled                      | Average per day                   |
+| **Tire (PSI)**             | Last recorded tire pressure                   | Depends on motor/vehicle          |
+| **Week Start/End**         | Derived from selected week (`start + 6 days`) | For charts and week label         |
+
+**Key idea:** Most metrics just show the **latest value** in the selected week. Charts use all daily values. Thresholds (like vibration > 40 Hz) can trigger warnings later.
+
