@@ -205,7 +205,6 @@
             time: document.getElementById('timeChart').getContext('2d')
         };
 
-        // Load immediately
         document.addEventListener('DOMContentLoaded', loadTelemetryData);
         document.getElementById('weekPicker').addEventListener('change', loadTelemetryData);
 
@@ -225,7 +224,6 @@
             fetch(`./telemetry_data.php?start=${startStr}&end=${endStr}`)
                 .then(res => res.json())
                 .then(data => {
-                    console.log('Telemetry Data:', data); // Debug check
                     renderAllCharts(data);
                     updateMetrics(data);
                 })
@@ -235,67 +233,69 @@
         function getWeekStartDate(year, week) {
             const simple = new Date(year, 0, 1 + (week - 1) * 7);
             const dow = simple.getDay();
-            const start = simple;
-            if (dow <= 4) start.setDate(simple.getDate() - simple.getDay() + 1);
-            else start.setDate(simple.getDate() + 8 - simple.getDay());
-            return start;
+            if (dow <= 4) simple.setDate(simple.getDate() - simple.getDay() + 1);
+            else simple.setDate(simple.getDate() + 8 - simple.getDay());
+            return simple;
         }
 
         function renderAllCharts(data) {
-            const config = [{
-                    key: 'battery',
-                    label: 'Battery Voltage (V)',
-                    color: 'rgb(174,14,14)'
-                },
-                {
-                    key: 'vibration',
-                    label: 'Motor Vibration (Hz)',
-                    color: 'rgb(14,14,174)'
-                },
-                {
-                    key: 'speed',
-                    label: 'Average Speed (km/h)',
-                    color: 'rgb(174,14,14)'
-                },
-                {
-                    key: 'time',
-                    label: 'Time Traveled (hours)',
-                    color: 'rgb(14,14,174)'
-                }
+            const chartsConfig = [
+                { key: 'battery', label: 'Battery Voltage (V)', color: 'rgb(174,14,14)', min: 30, max: 72, unit: 'V' },
+                { key: 'vibration', label: 'Motor Vibration (Hz)', color: 'rgb(14,14,174)', min: 0, max: 100, unit: 'Hz' },
+                { key: 'speed', label: 'Average Speed (km/h)', color: 'rgb(174,14,14)', min: 0, max: 80, unit: 'km/h' },
+                { key: 'time', label: 'Time Traveled (hours)', color: 'rgb(14,14,174)', min: 0, max: 12, unit: 'hrs' }
             ];
 
-            config.forEach(item => {
+            chartsConfig.forEach(item => {
                 const typeBtn = document.getElementById(`toggle${capitalize(item.key)}`);
-                const type = typeBtn.textContent.toLowerCase() === 'bar' ? 'bar' : 'line';
-                if (charts[item.key]) charts[item.key].destroy();
+                const type = charts[item.key]?.config.type || 'bar';
 
-                charts[item.key] = new Chart(ctx[item.key], {
-                    type,
-                    data: {
-                        labels: data.labels,
-                        datasets: [{
-                            label: item.label,
-                            data: data[item.key],
-                            backgroundColor: item.color.replace('rgb', 'rgba').replace(')', ',0.6)'),
-                            borderColor: item.color,
-                            borderWidth: 2,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: {
-                                beginAtZero: true
+                if (!charts[item.key]) {
+                    charts[item.key] = new Chart(ctx[item.key], {
+                        type,
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: item.label,
+                                data: data[item.key],
+                                backgroundColor: item.color.replace('rgb', 'rgba').replace(')', ',0.6)'),
+                                borderColor: item.color,
+                                borderWidth: 2,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    min: item.min,
+                                    max: item.max,
+                                    beginAtZero: false
+                                }
+                            },
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.dataset.label}: ${context.raw} ${item.unit}`;
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                } else {
+                    charts[item.key].data.labels = data.labels;
+                    charts[item.key].data.datasets[0].data = data[item.key];
+                    charts[item.key].update();
+                }
 
                 typeBtn.onclick = () => {
-                    typeBtn.textContent = typeBtn.textContent === 'Bar' ? 'Line' : 'Bar';
-                    renderAllCharts(data);
+                    const newType = charts[item.key].config.type === 'bar' ? 'line' : 'bar';
+                    charts[item.key].config.type = newType;
+                    charts[item.key].update();
+                    typeBtn.textContent = newType === 'bar' ? 'Bar' : 'Line';
                 };
             });
         }
@@ -303,7 +303,7 @@
         function updateMetrics(data) {
             document.getElementById('batteryMetric').innerText = data.battery.length ? `${data.battery.at(-1)} V` : '--';
             document.getElementById('vibrationMetric').innerText = data.vibration.length ? `${data.vibration.at(-1)} Hz` : '--';
-            document.getElementById('temperatureMetric').innerText = data.temperature.battery.length ? `${data.temperature.battery.at(-1)}°C` : '--';
+            document.getElementById('temperatureMetric').innerText = data.temperature.length ? `${data.temperature.at(-1)} °C` : '--';
             document.getElementById('mileageMetric').innerText = data.speed.length ? `${data.speed.at(-1)} km/h` : '--';
             document.getElementById('tireMetric').innerText = data.tire.length ? `${data.tire.at(-1)} PSI` : '--';
         }
