@@ -4,26 +4,22 @@ include "../src/connection.php";
 
 $response = ['success' => false, 'message' => ''];
 
-if ($_SERVER["REQUEST_METHOD"] === "GET") {
-    $username   = $mysqli->real_escape_string($_GET['username'] ?? '');
-    $password   = $_GET['password'] ?? '';
-    $department = $mysqli->real_escape_string($_GET['department'] ?? '');
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $username   = trim($mysqli->real_escape_string($_POST['username'] ?? ''));
+    $password   = trim($_POST['password'] ?? '');
+    $department = trim($mysqli->real_escape_string($_POST['department'] ?? ''));
 
     if (empty($username) || empty($password)) {
         $response['message'] = "Username and password are required.";
     } else {
-        // Check if username already exists
         $check_sql = "SELECT * FROM users WHERE username='$username'";
         $check_result = $mysqli->query($check_sql);
 
         if ($check_result->num_rows > 0) {
             $response['message'] = "Username already exists.";
         } else {
-            // Hash the password
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-
-            // Insert new user
-            $insert_sql = "INSERT INTO users (username, password, department) 
+            $insert_sql = "INSERT INTO users (username, password, department)
                            VALUES ('$username', '$hashed_password', '$department')";
 
             if ($mysqli->query($insert_sql)) {
@@ -35,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] === "GET") {
         }
     }
 } else {
-    $response['message'] = "Invalid request method. Use GET.";
+    $response['message'] = "Invalid request method. Use POST.";
 }
 
 $mysqli->close();
