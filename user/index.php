@@ -70,16 +70,10 @@
     <div id="main" class="container-fluid py-4 mt-5">
 
         <!-- Greeting -->
-        <?php
-        $username = $_SESSION['username'] ?? 'User';
-        $hour = date('H');
-        $greeting = $hour < 12 ? "Good Morning, $username!" : ($hour < 18 ? "Good Afternoon, $username!" :
-            "Good Evening, $username!");
-        ?>
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card shadow-sm p-3 text-center">
-                    <h3 class="text-primary mb-1"><?= $greeting ?></h3>
+                    <h3 id="greeting" class="text-primary mb-1"></h3>
                     <p class="text-muted mb-0">Here’s a quick overview of your vehicle’s current health.</p>
                 </div>
             </div>
@@ -96,7 +90,28 @@
     <?php include "./globals/scripts.php"; ?>
 
     <script>
+        // 🧠 Display user greeting using email from localStorage
         document.addEventListener("DOMContentLoaded", () => {
+            const email = localStorage.getItem("email") || "User";
+
+            // Optionally, display only the part before '@'
+            const namePart = email.includes("@") ? email.split("@")[0] : email;
+            console.log(namePart);
+
+            const hour = new Date().getHours();
+            let greetingText = "";
+
+            if (hour < 12) {
+                greetingText = `Good Morning, ${email}!`;
+            } else if (hour < 18) {
+                greetingText = `Good Afternoon, ${email}!`;
+            } else {
+                greetingText = `Good Evening, ${email}!`;
+            }
+
+            document.getElementById("greeting").textContent = greetingText;
+
+            // Fetch telemetry data after greeting is displayed
             fetch("./telemetry_data.php")
                 .then(res => res.json())
                 .then(data => {
@@ -121,7 +136,8 @@
                 },
                 {
                     label: 'Mileage',
-                    value: data.speed[lastIndex] !== null && data.time[lastIndex] !== null ? `${Math.round(data.speed[lastIndex] * data.time[lastIndex])} km` : '--',
+                    value: data.speed[lastIndex] !== null && data.time[lastIndex] !== null ?
+                        `${Math.round(data.speed[lastIndex] * data.time[lastIndex])} km` : '--',
                     desc: 'Today’s distance'
                 },
                 {
@@ -137,7 +153,9 @@
             ];
 
             const container = document.getElementById("topMetrics");
-            container.innerHTML = metrics.map(m => `
+            container.innerHTML = metrics
+                .map(
+                    (m) => `
                 <div class="col-md-2 col-6 mb-2">
                     <div class="card text-center p-3 shadow-sm card-fixed">
                         <h6>${m.label}</h6>
@@ -145,7 +163,9 @@
                         <small class="text-muted">${m.desc}</small>
                     </div>
                 </div>
-            `).join("");
+            `
+                )
+                .join("");
         }
 
         function renderCharts(data) {
@@ -168,26 +188,30 @@
             ];
 
             const container = document.getElementById("chartsContainer");
-            container.innerHTML = charts.map(c => `
+            container.innerHTML = charts
+                .map(
+                    (c) => `
                 <div class="col-lg-6 col-12 mb-3">
                     <div class="card shadow-sm p-3 chart-card">
                         <h5 class="text-primary mb-3">${c.label}</h5>
                         <canvas id="${c.id}"></canvas>
                     </div>
                 </div>
-            `).join("");
+            `
+                )
+                .join("");
 
-            charts.forEach(c => {
-                const validData = c.values.map(v => v !== null ? v : null);
-                new Chart(document.getElementById(c.id).getContext('2d'), {
-                    type: 'line',
+            charts.forEach((c) => {
+                const validData = c.values.map((v) => (v !== null ? v : null));
+                new Chart(document.getElementById(c.id).getContext("2d"), {
+                    type: "line",
                     data: {
                         labels: data.labels,
                         datasets: [{
                             label: c.label,
                             data: validData,
                             borderColor: c.color,
-                            backgroundColor: c.color.replace('rgb', 'rgba').replace(')', ',0.2)'),
+                            backgroundColor: c.color.replace("rgb", "rgba").replace(")", ",0.2)"),
                             fill: true,
                             tension: 0.3
                         }]

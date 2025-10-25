@@ -21,7 +21,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (password_verify($password, $row['password'])) {
                 $_SESSION['username'] = $row['username'];
                 $_SESSION['department'] = $row['department'] ?? '';
-                $login_success = true;
+                echo "<script>
+                    localStorage.setItem('email', '$username');
+                    window.location.href = '$redirect_url';
+                    </script>";
+                exit();
             } else {
                 $login_error = "Invalid password.";
             }
