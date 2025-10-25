@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C-Trike Predictive Maintenance</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --primary: rgb(174, 14, 14);
             --primary-light: rgb(220, 60, 60);
-            --accent: #ff904c;
             --text: #222;
             --background: #fff;
         }
@@ -23,11 +23,11 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: var(--background);
+            background-color: var(--background);
             color: var(--text);
-            overflow-x: hidden;
         }
 
+        /* Header */
         header {
             width: 100%;
             padding: 1rem 2rem;
@@ -35,7 +35,7 @@
             justify-content: space-between;
             align-items: center;
             background: #fff;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.05);
             position: fixed;
             top: 0;
             left: 0;
@@ -43,48 +43,51 @@
         }
 
         header img {
-            height: 50px;
+            height: 60px;
         }
 
         header button {
             background: var(--primary);
             border: none;
             color: #fff;
+            font-weight: 600;
             font-size: 1rem;
-            padding: 0.6rem 1.2rem;
+            padding: 0.6rem 1.4rem;
             border-radius: 8px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: background 0.3s ease;
         }
 
         header button:hover {
             background: var(--primary-light);
         }
 
+        /* Main Section */
         main {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             text-align: center;
-            padding: 0 1rem;
-            background: linear-gradient(180deg, #fff 0%, #fff7f7 100%);
+            padding: 6rem 1rem 2rem;
+            background: linear-gradient(180deg, #fff 0%, #fff5f5 100%);
         }
 
         main img {
-            width: 120px;
+            width: 110px;
             margin-bottom: 1rem;
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.3rem;
+            font-weight: 700;
             color: var(--primary);
             margin-bottom: 0.5rem;
         }
 
         p {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: #444;
             max-width: 600px;
             margin-bottom: 2rem;
@@ -93,23 +96,29 @@
         .cta-btn {
             background: var(--primary);
             color: #fff;
+            font-weight: 600;
             font-size: 1.1rem;
-            padding: 0.8rem 2rem;
+            padding: 0.9rem 2.4rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: 0.3s;
+            transition: 0.3s ease;
+            box-shadow: 0 4px 10px rgba(174, 14, 14, 0.25);
         }
 
         .cta-btn:hover {
             background: var(--primary-light);
+            box-shadow: 0 6px 12px rgba(174, 14, 14, 0.35);
         }
 
+        /* Footer */
         footer {
             text-align: center;
             padding: 1rem;
             font-size: 0.9rem;
             color: #777;
+            background: #fff;
+            border-top: 1px solid #eee;
         }
 
         @media (max-width: 768px) {
@@ -119,6 +128,10 @@
 
             p {
                 font-size: 1rem;
+            }
+
+            header img {
+                height: 45px;
             }
         }
     </style>
@@ -133,8 +146,8 @@
 
     <main>
         <img src="./assets/emob_logo_f.png" alt="C-Trike Logo">
-        <h1>C-Trike Predictive Maintenance</h1>
-        <p>Monitor your electric trike's health, performance, and maintenance predictions — all in one intelligent dashboard.</p>
+        <h1>C-Trike Predictive Maintenance System</h1>
+        <p>Empowering electric mobility with intelligent performance tracking and predictive maintenance solutions.</p>
         <button class="cta-btn" onclick="window.location.href='login/'">Get Started</button>
     </main>
 
