@@ -2,112 +2,145 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Responsive Admin &amp; Dashboard Template based on Bootstrap 5">
-    <meta name="author" content="AdminKit">
-    <meta name="keywords" content="adminkit, bootstrap, bootstrap 5, admin, dashboard, template, responsive, css, sass, html, theme, front-end, ui kit, web">
-
-    <link rel="preconnect" href="https://fonts.gstatic.com">
-
-    <title>Login</title>
-
-    <link href="https://demo.adminkit.io/css/light.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C-Trike Predictive Maintenance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: rgb(174, 14, 14);
             --primary-light: rgb(220, 60, 60);
             --accent: #ff904c;
-            --background: #fff7f7;
             --text: #222;
-            --border-radius: 12px;
-            --box-shadow: 0 2px 12px rgba(174, 14, 14, 0.08);
-            --transition: 0.3s cubic-bezier(.25, .8, .25, 1);
+            --background: #fff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            background: #fff;
-            color: var(--text);
             font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text);
+            overflow-x: hidden;
         }
 
-        /*
-        .btn-primary,
-        .btn-main {
+        header {
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        header img {
+            height: 50px;
+        }
+
+        header button {
+            background: var(--primary);
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        header button:hover {
+            background: var(--primary-light);
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+            padding: 0 1rem;
+            background: linear-gradient(180deg, #fff 0%, #fff7f7 100%);
+        }
+
+        main img {
+            width: 120px;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #444;
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        .cta-btn {
             background: var(--primary);
             color: #fff;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
+            font-size: 1.1rem;
+            padding: 0.8rem 2rem;
             border: none;
-            transition: var(--transition);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
         }
 
-        .btn-primary:hover,
-        .btn-main:hover {
+        .cta-btn:hover {
             background: var(--primary-light);
-            color: #fff;
         }
-        */
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 
 <body>
-    <main class="d-flex w-100 mt-1">
 
-        <div class="container d-flex flex-column">
+    <header>
+        <img src="./assets/emob_logo_f.png" alt="C-Trike Logo">
+        <button onclick="window.location.href='login/'">Login / Sign Up</button>
+    </header>
 
-            <div class="row ">
-                <div class="col-11 col-lg-10 text-center mx-auto mt-1">
-                    <img src="./assets/emob_logo_f.png" alt="" style="height: 100px; width: 100px;">
-                    <h3>C-Trike Predictive Maintenance and Dashboard</h3>
-
-                </div>
-                <div class="col-sm-10 col-md-5 col-xl-4 mx-auto d-table ">
-                    <div class="d-table-cell align-middle">
-
-                        <div class="text-center ">
-
-                            <h3>Welcome Back!</h3>
-                            <p class="lead ">
-                                Log in to your account to continue
-                            </p>
-                        </div>
-
-                        <div class="card border shadow ">
-                            <div class="card-body">
-
-                                <div class="m-sm-3">
-
-
-
-                                    <form method="post" class="" action="">
-                                        <div class="mb-3">
-                                            <label class="form-label " style="font-weight: bold;">Username</label>
-                                            <input class="form-control form-control-lg p-3" type="text" name="username" placeholder="Enter username" required />
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label " style="font-weight: bold;">Password</label>
-                                            <input class="form-control form-control-lg p-3" type="password" name="password" placeholder="Enter password" required />
-                                        </div>
-                                        <div class="d-grid gap-2 mt-3">
-                                            <button type="submit" class="btn p-2 btn-primary">Log in</button>
-                                            <button type="submit" class="btn p-2 btn-secondary btn-sm">Register</button>
-                                            <p style="color: #001efdff; text-align: center; font-size: 0.7em;">Forgot Password</p>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
+    <main>
+        <img src="./assets/emob_logo_f.png" alt="C-Trike Logo">
+        <h1>C-Trike Predictive Maintenance</h1>
+        <p>Monitor your electric trike's health, performance, and maintenance predictions — all in one intelligent dashboard.</p>
+        <button class="cta-btn" onclick="window.location.href='login/'">Get Started</button>
     </main>
 
-
+    <footer>
+        &copy; <?php echo date('Y'); ?> C-Trike Predictive Maintenance System. All rights reserved.
+    </footer>
 
 </body>
 
